@@ -316,7 +316,7 @@ class SilicaWater(Substance):
                        mass_Si=28.0855, 
                        mass_O=15.9994, 
                        mass_H=1.0079):
-        self,.init_config = init_config
+        self.init_config = init_config
         self.mass_Si=mass_Si
         self.mass_O=mass_O
         self.mass_H=mass_H
