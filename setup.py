@@ -7,5 +7,5 @@ setup(name='vashishta-simulator',
       author='Even Marius Nordhagen',
       author_email='evenmn@fys.uio.no',
       license='MIT',
-      packages=['vashishta-simulator'],
+      packages=['vashishta_simulator'],
       zip_safe=False)
