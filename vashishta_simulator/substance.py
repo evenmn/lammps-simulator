@@ -1222,6 +1222,12 @@ class SilicaCarbon(Substance):
                       "OCC" : OCC,
                       "CCO" : CCO,
                       "OOC" : OOC,
-                      "COO" : COO}
+                      "COO" : COO,
+                      "COSi" : COSi,
+                      "CSiO" : CSiO,
+                      "OCSi" : OCSi,
+                      "OSiC" : OSiC,
+                      "SiOC" : SiOC,
+                      "SiCO" : SiCO}
         masses = {"Si" : self.mass_Si, "O" : self.mass_O, "C" : self.mass_C}
         return parameters, masses
