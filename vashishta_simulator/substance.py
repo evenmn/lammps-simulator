@@ -10,6 +10,21 @@ class Substance:
     def __call__(self):
         raise NotImplementedError("Class {} has no instance '__call__'."
                                   .format(self.__class__.__name__))
+                                  
+class Custom(Substance):
+    def __init__(self, init_config, masses, params):
+        self.init_config=init_config
+        self.masses=masses
+        self.params=params
+        
+    def __repr__(self):
+        return "custom"
+        
+    def __str__(self):
+        return "Custom"
+        
+    def __call__(self):
+        return params, masses
         
 class Silica(Substance):
     """Default parameters taken from Vashishta 1990.

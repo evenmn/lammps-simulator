@@ -1,3 +1,4 @@
+import os
 
 class Computer:
     """ """
@@ -19,10 +20,10 @@ class CPU(Computer):
     num_threads : int
         number of threads used in the simulation
     """
-    def __init__(self, num_threads=4):
-        self.num_threads = num_threads
+    def __init__(self, num_procs=4):
+        self.num_procs = num_procs
         
-    def __call__(self, path, lmps_script):
+    def __call__(self, lmp_script, var):
         """ Run LAMMPS executable. 
         
         Parameters
@@ -30,13 +31,11 @@ class CPU(Computer):
         path : str
             path to working directory
         """
-        from os import getcwd, chdir, system
-        main_path = getcwd()
-        chdir(path)
-        call_string = "mpirun -n {} lmp_mpi -in {}" \
-                      .format(self.num_threads, lmps_script)
-        system(call_string)
-        chdir(main_path)
+        call_string = f"mpirun -n {self.num_procs} " 
+        for key, value in var.items():
+            call_string += f"-var {key} {value} "
+        call_string += f"lmp_daily -in {lmp_script}"
+        os.system(call_string)
         
 class GPU(Computer):
     """ Run simulations on gpu. This method runs the executable

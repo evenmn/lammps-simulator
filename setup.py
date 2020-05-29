@@ -8,4 +8,5 @@ setup(name='vashishta-simulator',
       author_email='evenmn@fys.uio.no',
       license='MIT',
       packages=['vashishta_simulator'],
+      include_package_data=True,
       zip_safe=False)
