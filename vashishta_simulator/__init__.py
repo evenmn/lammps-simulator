@@ -190,9 +190,10 @@ class AutoSim:
         param_file : str
             LAMMPS parameter file name. dest.vashishta by default.
         """
-        os.main_path = os.getcwd()
+        main_path = os.getcwd()
         os.chdir(self.pwd)
         self.computer(self.lmp_script, var)
+        os.chdir(main_path)
         return None
         
         
