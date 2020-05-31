@@ -31,10 +31,11 @@ class CPU(Computer):
         path : str
             path to working directory
         """
-        call_string = f"mpirun -n {self.num_procs} " 
+        call_string = f"mpirun -n {self.num_procs} lmp_daily " 
         for key, value in var.items():
             call_string += f"-var {key} {value} "
-        call_string += f"lmp_daily -in {lmp_script}"
+        call_string += f"-in {lmp_script}"
+        print(call_string)
         os.system(call_string)
         
 class GPU(Computer):

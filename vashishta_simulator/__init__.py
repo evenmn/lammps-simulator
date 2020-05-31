@@ -160,6 +160,12 @@ class AutoSim:
         head, self.lmp_script = os.path.split(filename)
         copyfile(filename, self.pwd + self.lmp_script)
         
+    def copy_to_wd(self, filename):
+        """Copy to working directory.
+        """
+        head, tail = os.path.split(filename)
+        copyfile(filename, self.pwd + tail)
+        
     def __call__(self, var={}):
         """ Run LAMMPS simulation with the parameters. 
         
