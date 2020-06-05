@@ -794,79 +794,79 @@ class SilicaWater(Substance):
         return parameters, masses
         
 class SilicaCarbon(Substance):
-    """Default parameters taken from Vashishta 1990.
+    """Default parameters.
     """
     def __init__(self, init_config,
+                       mass_C=12.0107,
                        mass_Si=28.0855, 
-                       mass_O=15.9994,
-                       mass_C=12.0107):
+                       mass_O=15.9994):
         self.init_config = init_config
+        self.mass_C=mass_C
         self.mass_Si=mass_Si
         self.mass_O=mass_O
-        self.mass_C=mass_C
         
     def __repr__(self):
-        return "silica"
+        return "silicacarbon"
         
     def __str__(self):
-        return "Silica"
+        return "SilicaCarbon"
         
     def __call__(self):
-        SiSiSi = {"H" : 0.82023, 
+        SiSiSi = {"H" : 0.15500, 
                   "eta" : 11, 
-                  "Zi" : 1.6, 
-                  "Zj" : 1.6, 
-                  "lambda1" : 999, 
+                  "Zi" : 0.7872, 
+                  "Zj" : 0.7872, 
+                  "lambda1" : 4.43, 
                   "D" : 0.0, 
-                  "lambda4" : 4.43, 
+                  "lambda4" : 2.5, 
                   "W" : 0.0, 
-                  "rc" : 10.0, 
+                  "rc" : 5.5, 
                   "B" : 0.0, 
                   "gamma" : 0.0, 
                   "r0" : 0.0, 
                   "C" : 0.0, 
                   "cos(theta)" : 0.0}
     
-        OOO = {"H" : 7.43848, 
+        OOO = {"H" : 140.38, 
                "eta" : 7, 
-               "Zi" : -0.8, 
-               "Zj" : -0.8, 
-               "lambda1" : 999, 
-               "D" : 22.1179, 
-               "lambda4" : 4.43, 
+               "Zi" : -0.3936, 
+               "Zj" : -0.3936, 
+               "lambda1" : 4.43, 
+               "D" : 5.3504, 
+               "lambda4" : 2.5, 
                "W" : 0.0, 
-               "rc" : 10.0, 
+               "rc" : 5.5, 
                "B" : 0.0, 
                "gamma" : 0.0, 
                "r0" : 0.0, 
                "C" : 0.0, 
                "cos(theta)" : 0.0}
     
-        OSiSi = {"H" : 163.859, 
+        OSiSi = {"H" : 30.923, 
                  "eta" : 9, 
-                 "Zi" : -0.8, 
-                 "Zj" : 1.6, 
-                 "lambda1" : 999, 
-                 "D" : 44.2357, 
-                 "lambda4" : 4.43, 
+                 "Zi" : -0.3936, 
+                 "Zj" : 0.7872, 
+                 "lambda1" : 4.43, 
+                 "D" : 10.701, 
+                 "lambda4" : 2.5, 
                  "W" : 0.0, 
-                 "rc" : 10.0, 
-                 "B" : 20.146, 
+                 "rc" : 5.5, 
+                 "B" : 19.972, 
                  "gamma" : 1.0, 
                  "r0": 2.60, 
                  "C" : 0.0, 
-                 "cos(theta)" : -0.77714596}
+                 "cos(theta)" : -0.80593}
     
-        SiOO = {"H" : 163.859, 
+        SiOO = {"H" : 30.923, 
                 "eta" : 9, 
-                "Zi" : 1.6, 
-                "Zj" : -0.8, 
-                "lambda1" : 999, 
-                "D" : 44.2357, 
-                "lambda4" : 4.43, 
+                "Zi" : 0.7872, 
+                "Zj" : -0.3936, 
+                "lambda1" : 4.43, 
+                "D" : 10.701, 
+                "lambda4" : 2.5, 
                 "W" : 0.0, 
-                "rc" : 10.0, 
-                "B" : 5.0365, 
+                "rc" : 5.5, 
+                "B" : 4.993, 
                 "gamma" : 1.0, 
                 "r0": 2.60, 
                 "C" : 0.0, 
@@ -947,7 +947,52 @@ class SilicaCarbon(Substance):
                "C" : 0.0, 
                "cos(theta)" : 0.0}
                
-        COC = {"H" : 10.0, 
+        OCC = {"H" : 447.09026, 
+               "eta" : 9, 
+               "Zi" : 0.0, 
+               "Zj" : 0.0, 
+               "lambda1" : 0.0, 
+               "D" : 0.0, 
+               "lambda4" : 0.0, 
+               "W" : 0.0, 
+               "rc" : 5.5, 
+               "B" : 0.0, 
+               "gamma" : 0.0, 
+               "r0": 0.0, 
+               "C" : 0.0, 
+               "cos(theta)" : 0.0}
+               
+        COO = {"H" : 447.09026, 
+               "eta" : 9, 
+               "Zi" : 0.0, 
+               "Zj" : 0.0, 
+               "lambda1" : 0.0, 
+               "D" : 0.0, 
+               "lambda4" : 0.0, 
+               "W" : 0.0, 
+               "rc" : 5.5,                 
+               "B" : 0.0, 
+               "gamma" : 0.0, 
+               "r0": 0.0, 
+               "C" : 0.0, 
+               "cos(theta)" : 0.0}
+               
+        COC = {"H" : 0.0, 
+               "eta" : 0.0, 
+               "Zi" : 0.0, 
+               "Zj" : 0.0, 
+               "lambda1" : 0.0, 
+               "D" : 0.0, 
+               "lambda4" : 0.0, 
+               "W" : 0.0, 
+               "rc" : 0.0, 
+               "B" : 0.0, 
+               "gamma" : 0.0, 
+               "r0": 0.0, 
+               "C" : 0.0, 
+               "cos(theta)" : 0.0}
+                
+        CCO = {"H" : 0.0, 
                "eta" : 0.0, 
                "Zi" : 0.0, 
                "Zj" : 0.0, 
@@ -962,7 +1007,7 @@ class SilicaCarbon(Substance):
                "C" : 0.0, 
                "cos(theta)" : 0.0}
                
-        OCO = {"H" : 10.0, 
+        OCO = {"H" : 0.0, 
                "eta" : 0.0, 
                "Zi" : 0.0, 
                "Zj" : 0.0, 
@@ -976,8 +1021,53 @@ class SilicaCarbon(Substance):
                "r0": 0.0, 
                "C" : 0.0, 
                "cos(theta)" : 0.0}
+                
+        OOC = {"H" : 0.0, 
+               "eta" : 0.0, 
+               "Zi" : 0.0, 
+               "Zj" : 0.0, 
+               "lambda1" : 0.0, 
+               "D" : 0.0, 
+               "lambda4" : 0.0,                 
+               "W" : 0.0, 
+               "rc" : 0.0, 
+               "B" : 0.0, 
+               "gamma" : 0.0, 
+               "r0": 0.0, 
+               "C" : 0.0, 
+               "cos(theta)" : 0.0}
                
-        SiCSi = {"H" : 10.0, 
+        CSiSi = {"H" : 447.09026, 
+                 "eta" : 9, 
+                 "Zi" : 0.0, 
+                 "Zj" : 0.0, 
+                  "lambda1" : 0.0, 
+                 "D" : 0.0, 
+                 "lambda4" : 0.0, 
+                 "W" : 0.0, 
+                 "rc" : 5.5, 
+                 "B" : 0.0, 
+                 "gamma" : 0.0, 
+                 "r0": 0.0, 
+                 "C" : 0.0, 
+                 "cos(theta)" : 0.0}
+               
+        SiCC = {"H" : 447.09026, 
+                "eta" : 9, 
+                "Zi" : 0.0, 
+                "Zj" : 0.0, 
+                "lambda1" : 0.0, 
+                "D" : 0.0, 
+                "lambda4" : 0.0, 
+                "W" : 0.0, 
+                "rc" : 5.5, 
+                "B" : 0.0, 
+                "gamma" : 0.0, 
+                "r0": 0.0, 
+                "C" : 0.0, 
+                "cos(theta)" : 0.0}
+               
+        SiCSi = {"H" : 0.0, 
                  "eta" : 0.0, 
                  "Zi" : 0.0, 
                  "Zj" : 0.0, 
@@ -992,22 +1082,7 @@ class SilicaCarbon(Substance):
                  "C" : 0.0, 
                  "cos(theta)" : 0.0}
                  
-        CSiC = {"H" : 10.0, 
-                "eta" : 0.0, 
-                "Zi" : 0.0, 
-                "Zj" : 0.0, 
-                "lambda1" : 0.0, 
-                "D" : 0.0, 
-                "lambda4" : 0.0, 
-                "W" : 0.0, 
-                "rc" : 0.0, 
-                "B" : 0.0, 
-                "gamma" : 0.0, 
-                "r0": 0.0, 
-                "C" : 0.0, 
-                "cos(theta)" : 0.0}
-                
-        SiCC = {"H" : 0.0, 
+        CSiC = {"H" : 0.0, 
                 "eta" : 0.0, 
                 "Zi" : 0.0, 
                 "Zj" : 0.0, 
@@ -1051,81 +1126,6 @@ class SilicaCarbon(Substance):
                  "r0": 0.0, 
                  "C" : 0.0, 
                  "cos(theta)" : 0.0}
-                 
-        CSiSi = {"H" : 0.0, 
-                 "eta" : 0.0, 
-                 "Zi" : 0.0, 
-                 "Zj" : 0.0, 
-                  "lambda1" : 0.0, 
-                 "D" : 0.0, 
-                 "lambda4" : 0.0, 
-                 "W" : 0.0, 
-                 "rc" : 0.0, 
-                 "B" : 0.0, 
-                 "gamma" : 0.0, 
-                 "r0": 0.0, 
-                 "C" : 0.0, 
-                 "cos(theta)" : 0.0}
-                 
-        OCC = {"H" : 0.0, 
-               "eta" : 0.0, 
-               "Zi" : 0.0, 
-               "Zj" : 0.0, 
-               "lambda1" : 0.0, 
-               "D" : 0.0, 
-               "lambda4" : 0.0, 
-               "W" : 0.0, 
-               "rc" : 0.0, 
-               "B" : 0.0, 
-               "gamma" : 0.0, 
-               "r0": 0.0, 
-               "C" : 0.0, 
-               "cos(theta)" : 0.0}
-                
-        CCO = {"H" : 0.0, 
-               "eta" : 0.0, 
-               "Zi" : 0.0, 
-               "Zj" : 0.0, 
-               "lambda1" : 0.0, 
-               "D" : 0.0, 
-               "lambda4" : 0.0, 
-               "W" : 0.0, 
-               "rc" : 0.0, 
-               "B" : 0.0, 
-               "gamma" : 0.0, 
-               "r0": 0.0, 
-               "C" : 0.0, 
-               "cos(theta)" : 0.0}
-                
-        OOC = {"H" : 0.0, 
-               "eta" : 0.0, 
-               "Zi" : 0.0, 
-               "Zj" : 0.0, 
-               "lambda1" : 0.0, 
-               "D" : 0.0, 
-               "lambda4" : 0.0,                 
-               "W" : 0.0, 
-               "rc" : 0.0, 
-               "B" : 0.0, 
-               "gamma" : 0.0, 
-               "r0": 0.0, 
-               "C" : 0.0, 
-               "cos(theta)" : 0.0}
-                 
-        COO = {"H" : 0.0, 
-               "eta" : 0.0, 
-               "Zi" : 0.0, 
-               "Zj" : 0.0, 
-               "lambda1" : 0.0, 
-               "D" : 0.0, 
-               "lambda4" : 0.0, 
-               "W" : 0.0, 
-               "rc" : 0.0,                 
-               "B" : 0.0, 
-               "gamma" : 0.0, 
-               "r0": 0.0, 
-               "C" : 0.0, 
-               "cos(theta)" : 0.0}
                
         COSi = {"H" : 0.0, 
                 "eta" : 0.0, 
@@ -1244,5 +1244,5 @@ class SilicaCarbon(Substance):
                       "OSiC" : OSiC,
                       "SiOC" : SiOC,
                       "SiCO" : SiCO}
-        masses = {"Si" : self.mass_Si, "O" : self.mass_O, "C" : self.mass_C}
+        masses = {"C" : self.mass_C, "Si" : self.mass_Si, "O" : self.mass_O}
         return parameters, masses

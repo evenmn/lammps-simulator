@@ -35,7 +35,6 @@ class CPU(Computer):
         for key, value in var.items():
             call_string += f"-var {key} {value} "
         call_string += f"-in {lmp_script}"
-        print(call_string)
         os.system(call_string)
         
 class GPU(Computer):
@@ -52,7 +51,7 @@ class GPU(Computer):
     def __init__(self, gpu_per_node=1):
         self.gpu_per_node = gpu_per_node
         
-    def __call__(self, path, lmps_script):
+    def __call__(self, lmp_script, var):
         """ Run LAMMPS executable. 
         
         Parameters
@@ -60,16 +59,13 @@ class GPU(Computer):
         path : str
             path to working directory
         """
-        from os import getcwd, chdir, system
-        main_path = getcwd()
-        chdir(path)
-        call_string = "lmp_kokkos_cuda_mpi -pk kokkos newton on comm no -k on \
-                       g {} -sf kk -in {}" \
-                      .format(self.gpu_per_node, lmps_script)
-        system(call_string)
-        chdir(main_path)
+        call_string = f"lmp_kokkos_cuda_mpi -pk kokkos newton on comm no -k on g {self.gpu_per_node} -sf kk "
+        for key, value in var.items():
+            call_string += f"-var {key} {value} "
+        call_string += f"-in {lmp_script}"
+        os.system(call_string)
         
-class Slurm_CPU(Computer):
+class SlurmCPU(Computer):
     """ Run LAMMPS simulations on CPU cluster with the Slurm queueing system.
     
     Parameters
@@ -91,16 +87,16 @@ class Slurm_CPU(Computer):
     def __init__(self, num_nodes=4, 
                        time="05:00:00", 
                        account="nn9272k",
-                       lmps_module="LAMMPS/13Mar18-foss-2018a",
+                       lmp_module="LAMMPS/13Mar18-foss-2018a",
                        jobscript="jobscript"):
         self.num_nodes = num_nodes
         self.num_threads = num_nodes * 16
         self.time = time
         self.account = account
-        self.lmps_module = lmps_module
+        self.lmp_module = lmp_module
         self.jobscript = jobscript
         
-    def generate_jobscript(self, lmps_script):
+    def generate_jobscript(self, lmp_script, var):
         """ Generate jobscript.
         """
         
@@ -117,21 +113,22 @@ class Slurm_CPU(Computer):
                     
         temp = "#SBATCH --{}={}\n#\n"
                     
-        f = open(self.jobscript, "w")
-        f.write("#!/bin/bash\n\n")
-        for key, setting in settings.items():
-            f.write(temp.format(key, setting))
-            
-        f.write("## Set up job environment:\n")                                                     
-        f.write("source /cluster/bin/jobsetup\n")
-        f.write("module purge\n")                                    
-        f.write("set -o errexit\n\n")
-        f.write("module load {}\n\n".format(self.lmps_module))
-        f.write("mpirun lmp_mpi -in {}".format(lmps_script))
-            
-        f.close()          
+        with open(self.jobscript, "w") as f:
+            f.write("#!/bin/bash\n\n")
+            for key, setting in settings.items():
+                f.write(temp.format(key, setting))
+                
+            f.write("## Set up job environment:\n")                                                     
+            f.write("source /cluster/bin/jobsetup\n")
+            f.write("module purge\n")                                    
+            f.write("set -o errexit\n\n")
+            f.write(f"module load {self.lmp_module}\n\n")
+            f.write(f"mpirun lmp_mpi ")
+            for key, value in var.items():
+                f.write(f"-var {key} {value} ")
+            f.write(f"-in {lmp_script}")       
         
-    def __call__(self, path, lmps_script):
+    def __call__(self, lmp_script, var):
         """ Submit slurm job. 
         
         Parameters
@@ -143,15 +140,11 @@ class Slurm_CPU(Computer):
         script : str
             LAMMPS infile name
         """
-        from os import getcwd, chdir, system
-        main_path = getcwd()
-        chdir(path)
-        self.generate_jobscript(lmps_script)
-        system("sbatch {}".format(self.jobscript))
-        chdir(main_path)
+        self.generate_jobscript(lmp_script, var)
+        os.system(f"sbatch {self.jobscript}")
         
         
-class Slurm_GPU(Computer):
+class SlurmGPU(Computer):
     """ Run LAMMPS simulations on GPU cluster with the Slurm queueing system.
     
     Parameters
@@ -168,7 +161,7 @@ class Slurm_GPU(Computer):
         self.gpu_per_node = gpu_per_node
         self.jobscript = jobscript
         
-    def generate_jobscript(self, lmps_script):
+    def generate_jobscript(self, lmp_script, var):
         """ Generate jobscript.
         """
         
@@ -184,18 +177,18 @@ class Slurm_GPU(Computer):
                     
         temp = "#SBATCH --{}={}\n#\n"
                     
-        f = open(self.jobscript, "w")
-        f.write("#!/bin/bash\n\n")
-        for key, setting in settings.items():
-            f.write(temp.format(key, setting))
-            
-        f.write("echo $CUDA_VISIBLE_DEVICES\n")                                                     
-        f.write("mpirun -n {} lmp -k on g {} -sf kk -pk kokkos newton on neigh half -in {}"
-                 .format(self.gpu_per_node, self.gpu_per_node, lmps_script))
-            
-        f.close()          
+        with open(self.jobscript, "w") as f:
+            f.write("#!/bin/bash\n\n")
+            for key, setting in settings.items():
+                f.write(temp.format(key, setting))
+                
+            f.write("echo $CUDA_VISIBLE_DEVICES\n")                                                     
+            f.write(f"mpirun -n {self.gpu_per_node} lmp -k on g {self.gpu_per_node} -sf kk -pk kokkos newton on neigh half ")
+            for key, value in var.items():
+                f.write(f"-var {key} {value} ")
+            f.write(f"-in {lmp_script}")      
         
-    def __call__(self, path, lmps_script):
+    def __call__(self, lmp_script, var):
         """ Submit slurm job. 
         
         Parameters
@@ -207,9 +200,5 @@ class Slurm_GPU(Computer):
         script : str
             LAMMPS infile name
         """
-        from os import getcwd, chdir, system
-        main_path = getcwd()
-        chdir(path)
-        self.generate_jobscript(lmps_script)
-        system("sbatch {}".format(self.jobscript))
-        chdir(main_path)
+        self.generate_jobscript(lmp_script, var)
+        os.system(f"sbatch {self.jobscript}")
