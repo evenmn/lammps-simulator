@@ -28,9 +28,18 @@ class Computer:
     def run_lammps(num_procs, lmp_exec, lmp_script, args):
         """Run LAMMPS script lmp_script using executable lmp_exec on num_procs 
         processes with command line arguments specified by args
+        
+        :param num_procs: number of processes
+        :type num_procs: int
+        :param lmp_exec: LAMMPS executable
+        :type lmp_exec: str
+        :param lmp_script: LAMMPS script
+        :type lmp_script: str
+        :param args: command line arguments
+        :type args: dict
         """
-        call_string = f"mpirun -n {self.num_procs} {self.lmp_exec} "
-        for key1, value1 in arg.items():
+        call_string = f"mpirun -n {num_procs} {lmp_exec} "
+        for key1, value1 in args.items():
             for key2, value2 in value1.items():
                 call_string += f"{key1} {key2} {value2} "
         call_string += f"-in {lmp_script}"
@@ -64,6 +73,9 @@ class CPU(Computer):
         
         var = {"-var" : var}     
         merged_args = {**self.args, **var}
+        
+        print(merged_args)
+        
         call_string = self.run_lammps(self.num_procs, 
                                       self.lmp_exec, 
                                       lmp_script, 
@@ -144,7 +156,7 @@ class SlurmCPU(Computer):
                             "account" : "nn9272k",
                             "time" : "05:00:00",
                             "partition" : "normal",
-                            "ntasks" : str(self.num_threads),
+                            "ntasks" : str(self.num_procs),
                             "nodes" : str(self.num_nodes),
                             "output" : "slurm.out",
                             #"mem-per-cpu" : str(3800),
@@ -213,7 +225,7 @@ class SlurmGPU(Computer):
                        lmp_exec="lmp_mpi",
                        settings={},
                        args={},
-                       jobscript="jobscript"):):
+                       jobscript="jobscript"):
         self.gpu_per_node = gpu_per_node
         self.jobscript = jobscript
         
