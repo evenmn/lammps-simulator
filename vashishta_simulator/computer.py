@@ -178,14 +178,14 @@ class SlurmCPU(Computer):
         with open(self.jobscript, "w") as f:
             f.write("#!/bin/bash\n\n")
             for key, setting in self.settings.items():
-                f.write(f"{key} {setting}\n")
+                f.write(f"#SBATCH --{key}={setting}\n#\n")
                 
             f.write("## Set up job environment:\n")                                                     
             f.write("source /cluster/bin/jobsetup\n")
             f.write("module purge\n")                                    
             f.write("set -o errexit\n\n")
             f.write(f"module load {self.lmp_module}\n\n")
-            f.write(self.run_lammps(self.gpu_per_node, 
+            f.write(self.run_lammps(self.num_procs, 
                                     self.lmp_exec, 
                                     lmp_script, 
                                     args))
@@ -227,6 +227,7 @@ class SlurmGPU(Computer):
                        args={},
                        jobscript="jobscript"):
         self.gpu_per_node = gpu_per_node
+        self.lmp_exec = lmp_exec
         self.jobscript = jobscript
         
         default_settings = {"job-name" : "GPU-job",
@@ -260,7 +261,7 @@ class SlurmGPU(Computer):
         with open(self.jobscript, "w") as f:
             f.write("#!/bin/bash\n\n")
             for key, setting in self.settings.items():
-                f.write(f"{key} {setting}\n")
+                f.write(f"#SBATCH --{key}={setting}\n#\n")
                 
             f.write("echo $CUDA_VISIBLE_DEVICES\n")                                                     
             f.write(self.run_lammps(self.gpu_per_node, 
