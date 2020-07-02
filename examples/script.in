@@ -1,0 +1,56 @@
+units		metal
+boundary	p p p
+atom_style	atomic
+
+read_data watercube_4nm.data
+pair_style vashishta
+pair_coeff * * H2O.vashishta H O 
+
+neigh_modify every 1 delay 0 check yes
+mass            1 1.0079
+mass            2 15.9994
+timestep 0.0005
+
+variable heat_steps equal $(v_heat_time/dt) # 3ns 
+variable equilibri_steps equal $(50/dt) # 50 ps
+
+group group1 type 1
+group group2 type 2
+
+fix balance all balance 1000 1.0 shift xyz 20 1.0
+
+thermo_style custom step time temp enthalpy etotal press density spcpu cpuremain
+thermo 10
+
+minimize 1.0e-4 1.0e-6 100 1000
+
+velocity all create 300 1281950 mom yes rot yes
+
+write_data minimize_300K.data
+
+# Equilibriation down
+# fix nvt all nvt temp 300 300 0.1
+# run ${equilibri_steps}
+# write_data water_after_nvt.data
+# unfix nvt
+
+fix npt all npt temp 300 300 0.1 iso 0.987 0.987 0.1
+run ${equilibri_steps}
+write_data water_after_npt.data
+unfix npt
+
+# Quit simulation if the density is unrealistic
+#variable dens equal density
+#if "(${dens} > 1.1 || ${dens} < 0.9)" then quit
+
+# Heat up
+fix npt all npt temp 300 450 0.1 iso 0.987 0.987 0.1
+run ${heat_steps}
+write_data vapor_450K.data
+unfix npt
+
+# Cool down again
+fix npt all npt temp 450 300 0.1 iso 0.987 0.987 0.1
+run ${heat_steps}
+write_data water_final.data
+

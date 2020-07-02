@@ -25,7 +25,7 @@ class Computer:
                                   .format(self.__class__.__name__))
                    
     @staticmethod             
-    def run_lammps(num_procs, lmp_exec, lmp_script, args):
+    def run_lammps(num_procs, lmp_exec, args, var):
         """Run LAMMPS script lmp_script using executable lmp_exec on num_procs 
         processes with command line arguments specified by args
         
@@ -33,16 +33,18 @@ class Computer:
         :type num_procs: int
         :param lmp_exec: LAMMPS executable
         :type lmp_exec: str
-        :param lmp_script: LAMMPS script
-        :type lmp_script: str
         :param args: command line arguments
         :type args: dict
+        :param var: variables defined by the command line
+        :type var: dict
         """
         call_string = f"mpirun -n {num_procs} {lmp_exec} "
-        for key1, value1 in args.items():
-            for key2, value2 in value1.items():
-                call_string += f"{key1} {key2} {value2} "
-        call_string += f"-in {lmp_script}"
+        for key, value in args.items():
+            call_string += f"{key} {value} "
+            
+        for key, value in var.items():
+            call_string += f"-var {key} {value} "
+
         return call_string
         
 class CPU(Computer):
@@ -70,16 +72,10 @@ class CPU(Computer):
         :param var: LAMMPS variables defined by the command line
         :type var: dict
         """
+            
+        self.args["-in"] = lmp_script
         
-        var = {"-var" : var}     
-        merged_args = {**self.args, **var}
-        
-        print(merged_args)
-        
-        call_string = self.run_lammps(self.num_procs, 
-                                      self.lmp_exec, 
-                                      lmp_script, 
-                                      merged_args)
+        call_string = self.run_lammps(self.num_procs, self.lmp_exec, self.args, var)
         os.system(call_string)
         
 class GPU(Computer):
@@ -96,9 +92,9 @@ class GPU(Computer):
         self.gpu_per_node = gpu_per_node
         self.lmp_exec = lmp_exec
         
-        default_args = {"-pk" : {"kokkos" : "", "newton" : "on", "comm" : "no"},
-                        "-k" : {"on" : f"g {self.gpu_per_node}"},
-                        "-sf" : {"kk" : ""}}
+        default_args = {"-pk" : "kokkos newton on comm no",
+                        "-k" : f"on g {self.gpu_per_node}",
+                        "-sf" : "kk"}
         self.args = {**default_args, **args}    # merge 
         
         
@@ -111,14 +107,9 @@ class GPU(Computer):
         :type var: dict
         """
         
-        var = {"-var" : var}
-                        
-        merged_args = {**self.args, **var}
+        self.args["-in"] = lmp_script
         
-        call_string = self.run_lammps(self.gpu_per_node, 
-                                      self.lmp_exec, 
-                                      lmp_script, 
-                                      merged_args)
+        call_string = self.run_lammps(self.gpu_per_node, self.lmp_exec, self.args, var)
         os.system(call_string)
         
 class SlurmCPU(Computer):
@@ -166,13 +157,13 @@ class SlurmCPU(Computer):
         self.settings = {**default_settings, **settings}
         self.args = args
         
-    def generate_jobscript(self, lmp_script, args):
+    def generate_jobscript(self, args, var):
         """ Generate jobscript.
         
-        :param lmp_script: LAMMPS script
-        :type lmp_script: str
         :param args: command line arguments
         :type args: dict
+        :param var: LAMMPS variables defined by the command line
+        :type var: dict
         """
                     
         with open(self.jobscript, "w") as f:
@@ -185,10 +176,7 @@ class SlurmCPU(Computer):
             f.write("module purge\n")                                    
             f.write("set -o errexit\n\n")
             f.write(f"module load {self.lmp_module}\n\n")
-            f.write(self.run_lammps(self.num_procs, 
-                                    self.lmp_exec, 
-                                    lmp_script, 
-                                    args))
+            f.write(self.run_lammps(self.num_procs, self.lmp_exec, args, var))
         
     def __call__(self, lmp_script, var):
         """ Start LAMMPS simulation
@@ -199,11 +187,9 @@ class SlurmCPU(Computer):
         :type var: dict
         """
         
-        var = {"-var" : var}
-                        
-        merged_args = {**self.args, **var}
+        self.args["-in"] = lmp_script
         
-        self.generate_jobscript(lmp_script, merged_args)
+        self.generate_jobscript(self.args, var)
         os.system(f"sbatch {self.jobscript}")
         
         
@@ -222,7 +208,7 @@ class SlurmGPU(Computer):
     :type jobscript: str
     """
     def __init__(self, gpu_per_node=1, 
-                       lmp_exec="lmp_mpi",
+                       lmp_exec="lmp",
                        settings={},
                        args={},
                        jobscript="jobscript"):
@@ -240,22 +226,22 @@ class SlurmGPU(Computer):
                             #"mail-type" : "BEGIN,TIME_LIMIT_10,END",
                            }
                            
-        default_args = {"-pk" : {"kokkos" : "", "newton" : "on", "neigh" : "half"},
-                        "-k" : {"on" : f"g {self.gpu_per_node}"},
-                        "-sf" : {"kk" : ""}}
+        default_args = {"-pk" : "kokkos newton on neigh half",
+                        "-k" : f"on g {self.gpu_per_node}",
+                        "-sf" : "kk"}
         self.args = {**default_args, **args}    # merge 
                            
         self.settings = {**default_settings, **settings}
         
         
         
-    def generate_jobscript(self, lmp_script, args):
+    def generate_jobscript(self, args, var):
         """ Generate jobscript.
         
-        :param lmp_script: LAMMPS script
-        :type lmp_script: str
         :param args: command line arguments
         :type args: dict
+        :param var: LAMMPS variables defined by the command line
+        :type var: dict
         """
                     
         with open(self.jobscript, "w") as f:
@@ -264,10 +250,7 @@ class SlurmGPU(Computer):
                 f.write(f"#SBATCH --{key}={setting}\n#\n")
                 
             f.write("echo $CUDA_VISIBLE_DEVICES\n")                                                     
-            f.write(self.run_lammps(self.gpu_per_node, 
-                                    self.lmp_exec, 
-                                    lmp_script, 
-                                    args))   
+            f.write(self.run_lammps(self.gpu_per_node, self.lmp_exec, args, var))   
         
     def __call__(self, lmp_script, var):
         """ Start LAMMPS simulation
@@ -278,9 +261,7 @@ class SlurmGPU(Computer):
         :type var: dict
         """
         
-        var = {"-var" : var}
-                        
-        merged_args = {**self.args, **var}
+        self.args["-in"] = lmp_script
         
-        self.generate_jobscript(lmp_script, merged_args)
+        self.generate_jobscript(self.args, var)
         os.system(f"sbatch {self.jobscript}")
