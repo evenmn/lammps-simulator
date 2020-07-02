@@ -127,6 +127,8 @@ class SlurmCPU(Computer):
     :type procs_per_node: int
     :param lmp_module: name of the preferred LAMMPS module
     :type lmp_module: str
+    :param generate_jobscript: if True, a job script is generated
+    :type generate_jobscript: bool
     :param jobscript: name of the jobscript
     :type jobscript: str
     """
@@ -136,11 +138,13 @@ class SlurmCPU(Computer):
                        args={},
                        procs_per_node=16,
                        lmp_module="LAMMPS/13Mar18-foss-2018a",
+                       generate_jobscript=True,
                        jobscript="jobscript"):
         self.num_nodes = num_nodes
         self.num_procs = num_nodes * procs_per_node
         self.lmp_exec = lmp_exec
         self.lmp_module = lmp_module
+        self.generate_jobscript = generate_jobscript
         self.jobscript = jobscript
         
         default_settings = {"job-name" : "CPU-job",
@@ -157,7 +161,7 @@ class SlurmCPU(Computer):
         self.settings = {**default_settings, **settings}
         self.args = args
         
-    def generate_jobscript(self, args, var):
+    def gen_jobscript(self, args, var):
         """ Generate jobscript.
         
         :param args: command line arguments
@@ -189,7 +193,8 @@ class SlurmCPU(Computer):
         
         self.args["-in"] = lmp_script
         
-        self.generate_jobscript(self.args, var)
+        if self.generate_jobscript:
+            self.gen_jobscript(self.args, var)
         os.system(f"sbatch {self.jobscript}")
         
         
@@ -204,6 +209,8 @@ class SlurmGPU(Computer):
     :type settings: dict
     :param args: command line arguments
     :type args: dict
+    :param generate_jobscript: if True, a job script is generated
+    :type generate_jobscript: bool
     :param jobscript: name of the jobscript
     :type jobscript: str
     """
@@ -211,9 +218,11 @@ class SlurmGPU(Computer):
                        lmp_exec="lmp",
                        settings={},
                        args={},
+                       generate_jobscript=True,
                        jobscript="jobscript"):
         self.gpu_per_node = gpu_per_node
         self.lmp_exec = lmp_exec
+        self.generate_jobscript = generate_jobscript
         self.jobscript = jobscript
         
         default_settings = {"job-name" : "GPU-job",
@@ -235,7 +244,7 @@ class SlurmGPU(Computer):
         
         
         
-    def generate_jobscript(self, args, var):
+    def gen_jobscript(self, args, var):
         """ Generate jobscript.
         
         :param args: command line arguments
@@ -263,5 +272,6 @@ class SlurmGPU(Computer):
         
         self.args["-in"] = lmp_script
         
-        self.generate_jobscript(self.args, var)
+        if self.generate_jobscript:
+            self.gen_jobscript(self.args, var)
         os.system(f"sbatch {self.jobscript}")
