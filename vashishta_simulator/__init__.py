@@ -63,6 +63,7 @@ class Simulator:
         :type string: str
         :param string: initial string that will be extended with all parameters
         """
+
         for suffix in param_suffices:
             param_list.append(params[suffix])
         for param in param_list:
@@ -90,15 +91,6 @@ class Simulator:
             file.write("\n")
             file.write(string_line1)
             file.write(string_line2)
-            
-    @staticmethod
-    def global_params(key1, key2):
-                Z_H = - value / 2
-                params["OOO"] = {"Zi" : value, "Zj" : value}
-                params["HHH"] = {"Zi" : Z_H, "Zj" : Z_H}
-                params["OHH"] = {"Zi" : value, "Zj" : Z_H}
-                params["HOO"] = {"Zi" : Z_H, "Zj" : value}
-
                 
     def generate_parameter_file(self, substance, filename="dest.vashishta", params={}):
         """Generates input parameter file for the potential. The default
@@ -158,31 +150,21 @@ class Simulator:
             raise NotImplementedError("The currently available substances are 'silica' and 'water'")
         
         # Set parameters
-        #for comb, parameters in params.items():
-        #    for parameter, value in parameters.items():
-        #        self.params[comb][parameter] = value
+        for comb, parameters in params.items():
+            for parameter, value in parameters.items():
+                self.params[comb][parameter] = value
        
-        # Merge parameter dictionaries
-        self.params = {**self.params, **params}
-
         # Make new parameter file
         this_dir, this_filename = os.path.split(__file__)
         header_filename = this_dir + "/data/header.vashishta"
         self.param_file = filename
         
         copyfile(header_filename, self.wd + self.param_file)
-        
-        for key, value in self.params["global"]:
-            
-            elif key == "Z_H":
-                
 
         # Add parameters to file
         for name, params in self.params.items():
             if name != "global":
                 self.append_type_to_file(name, params, self.wd + self.param_file)
-
-        for name, params in self.params.
 
     def set_lammps_script(self, filename, var={}, copy=True):
         """Set LAMMPS script
