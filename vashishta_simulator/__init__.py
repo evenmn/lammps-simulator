@@ -91,6 +91,14 @@ class Simulator:
             file.write(string_line1)
             file.write(string_line2)
             
+    @staticmethod
+    def global_params(key1, key2):
+                Z_H = - value / 2
+                params["OOO"] = {"Zi" : value, "Zj" : value}
+                params["HHH"] = {"Zi" : Z_H, "Zj" : Z_H}
+                params["OHH"] = {"Zi" : value, "Zj" : Z_H}
+                params["HOO"] = {"Zi" : Z_H, "Zj" : value}
+
                 
     def generate_parameter_file(self, substance, filename="dest.vashishta", params={}):
         """Generates input parameter file for the potential. The default
@@ -108,17 +116,55 @@ class Simulator:
         if substance == "water":
             from .substance import water
             self.params = water
+            if "global" in params:
+                for key, value in params["global"].items():
+                    if key == "Z_O":
+                        Z_H = - value / 2
+                        params["OOO"] = {"Zi" : value, "Zj" : value}
+                        params["HHH"] = {"Zi" : Z_H, "Zj" : Z_H}
+                        params["OHH"] = {"Zi" : value, "Zj" : Z_H}
+                        params["HOO"] = {"Zi" : Z_H, "Zj" : value}
+                    elif key == "Z_H":
+                        Z_O = - 2 * value 
+                        params["OOO"] = {"Zi" : Z_O, "Zj" : Z_O}
+                        params["HHH"] = {"Zi" : value, "Zj" : value}
+                        params["OHH"] = {"Zi" : Z_O, "Zj" : value}
+                        params["HOO"] = {"Zi" : value, "Zj" : Z_O}
+                    else:
+                        raise NotImplemented
+                del params["global"]
+
         elif substance == "silica":
             from .substance import silica
             self.params = silica
+            if "global" in params:
+                for key, value in params["global"].items():
+                    if key == "Z_Si":
+                        Z_O = - value / 2
+                        params["SiSiSi"] = {"Zi" : value, "Zj" : value}
+                        params["OOO"] = {"Zi" : Z_O, "Zj" : Z_O}
+                        params["SiOO"] = {"Zi" : value, "Zj" : Z_O}
+                        params["OSiSi"] = {"Zi" : Z_O, "Zj" : value}
+                    elif key == "Z_O":
+                        Z_Si = - 2 * value 
+                        params["SiSiSi"] = {"Zi" : Z_Si, "Zj" : Z_Si}
+                        params["OOO"] = {"Zi" : value, "Zj" : value}
+                        params["SiOO"] = {"Zi" : Z_Si, "Zj" : value}
+                        params["OSiSi"] = {"Zi" : value, "Zj" : Z_Si}
+                    else:
+                        raise NotImplemented
+                del params["global"]
         else:
-            raise NotImplementedError("The currently available substances are silica and water")
+            raise NotImplementedError("The currently available substances are 'silica' and 'water'")
         
         # Set parameters
-        for comb, parameters in params.items():
-            for parameter, value in parameters.items():
-                self.params[comb][parameter] = value
-        
+        #for comb, parameters in params.items():
+        #    for parameter, value in parameters.items():
+        #        self.params[comb][parameter] = value
+       
+        # Merge parameter dictionaries
+        self.params = {**self.params, **params}
+
         # Make new parameter file
         this_dir, this_filename = os.path.split(__file__)
         header_filename = this_dir + "/data/header.vashishta"
@@ -126,9 +172,17 @@ class Simulator:
         
         copyfile(header_filename, self.wd + self.param_file)
         
+        for key, value in self.params["global"]:
+            
+            elif key == "Z_H":
+                
+
         # Add parameters to file
         for name, params in self.params.items():
-            self.append_type_to_file(name, params, self.wd + self.param_file)
+            if name != "global":
+                self.append_type_to_file(name, params, self.wd + self.param_file)
+
+        for name, params in self.params.
 
     def set_lammps_script(self, filename, var={}, copy=True):
         """Set LAMMPS script
