@@ -125,6 +125,11 @@ class Simulator:
                     else:
                         raise NotImplemented
                 del params["global"]
+            if "all" in params:
+                for key, value in params["all"].items():
+                    params["HHH,OOO,HOO,OHH"] = {key : value}
+                del params["all"]
+       
 
         elif substance == "silica":
             from .substance import silica
@@ -146,13 +151,19 @@ class Simulator:
                     else:
                         raise NotImplemented
                 del params["global"]
+            if "all" in params:
+                for key, value in params["all"].items():
+                    params["SiSiSi,OOO,SiOO,OSiSi"] = {key : value}
+                del params["all"]
         else:
             raise NotImplementedError("The currently available substances are 'silica' and 'water'")
-        
-        # Set parameters
+
+        # Merge given parameters with default parameters
         for comb, parameters in params.items():
-            for parameter, value in parameters.items():
-                self.params[comb][parameter] = value
+            combs = comb.split(",")
+            for c in combs:
+                for parameter, value in parameters.items():
+                    self.params[c][parameter] = value
        
         # Make new parameter file
         this_dir, this_filename = os.path.split(__file__)
@@ -163,8 +174,7 @@ class Simulator:
 
         # Add parameters to file
         for name, params in self.params.items():
-            if name != "global":
-                self.append_type_to_file(name, params, self.wd + self.param_file)
+            self.append_type_to_file(name, params, self.wd + self.param_file)
 
     def set_lammps_script(self, filename, var={}, copy=True):
         """Set LAMMPS script
