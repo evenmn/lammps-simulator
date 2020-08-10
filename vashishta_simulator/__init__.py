@@ -4,15 +4,15 @@ from re import findall
 
 class Simulator:
     """Initialize class
-    
+
     :param directory: working directory
     :type directory: str
     :param overwrite: if True, a directory with identical name will be overwritten. If False, a number extension is added to the directory name to avoid overwriting
     :type overwrite: bool
     """
-    
+
     from .computer import CPU
-    
+
     def __init__(self, directory, overwrite=False):
         self.wd = directory
         if overwrite:
@@ -32,7 +32,7 @@ class Simulator:
                     ext += 1
                     self.wd = directory + f"_{ext}"
         self.wd += "/"
-        
+
     def copy_to_wd(self, filename):
         """Copy one or several files to working directory.
 
@@ -50,13 +50,13 @@ class Simulator:
         for file in filename:
             head, tail = os.path.split(file)
             copyfile(file, self.wd + tail)
-        
+
     def ordered_parameter_string(self, params, param_suffices, param_list, string):
         """Returning an ordered list of all the parameter values
-        
+
         :type params: dict
         :param params: dictionary with all parameters
-        :type param_suffices: list of str  
+        :type param_suffices: list of str
         :param param_suffices: list of all parameter suffices (e.g. "Zi") correctly ordered
         :type param_list: list
         :param param_list: initial list to append parameters to
@@ -69,11 +69,11 @@ class Simulator:
         for param in param_list:
             string += str(param) + "  \t"
         return string + "\n"
-        
+
     def append_type_to_file(self, name, params, filename):
         """Append the actual parameter values to the parameter file.
-        
-        :type name: str 
+
+        :type name: str
         :param name: name of interaction combo (e.g. "SiSiSi")
         :type params: dict
         :param params: dictionary with all parameters
@@ -86,75 +86,31 @@ class Simulator:
         params_line2 = ["W", "rc", "B", "xi", "r0", "C", "cos(theta)"]  # correctly ordered
         string_line1 = self.ordered_parameter_string(params, params_line1, prefix_list, "")
         string_line2 = self.ordered_parameter_string(params, params_line2, [], (len(name) + 6) * " ")
-            
+
         with open(filename, 'a') as file:
             file.write("\n")
             file.write(string_line1)
             file.write(string_line2)
-                
+
     def generate_parameter_file(self, substance, filename="dest.vashishta", params={}):
         """Generates input parameter file for the potential. The default
         parameters are the ones specified in Wang et al., so parameters
         that are not specified will fall back on these default parameters.
-        
+
         :param substance: substance to simulate
         :type substance: str
         :param filename: filename of parameter file
         :type filename: str
-        :param params: dictionary of parameters that should be changed 
+        :param params: dictionary of parameters that should be changed
         :type params: dict
         """
         # Get default parameters
         if substance == "water":
             from .substance import water
             self.params = water
-            if "global" in params:
-                for key, value in params["global"].items():
-                    if key == "Z_O":
-                        Z_H = - value / 2
-                        params["OOO"] = {"Zi" : value, "Zj" : value}
-                        params["HHH"] = {"Zi" : Z_H, "Zj" : Z_H}
-                        params["OHH"] = {"Zi" : value, "Zj" : Z_H}
-                        params["HOO"] = {"Zi" : Z_H, "Zj" : value}
-                    elif key == "Z_H":
-                        Z_O = - 2 * value 
-                        params["OOO"] = {"Zi" : Z_O, "Zj" : Z_O}
-                        params["HHH"] = {"Zi" : value, "Zj" : value}
-                        params["OHH"] = {"Zi" : Z_O, "Zj" : value}
-                        params["HOO"] = {"Zi" : value, "Zj" : Z_O}
-                    else:
-                        raise NotImplemented
-                del params["global"]
-            if "all" in params:
-                for key, value in params["all"].items():
-                    params["HHH,OOO,HOO,OHH"] = {key : value}
-                del params["all"]
-       
-
         elif substance == "silica":
             from .substance import silica
             self.params = silica
-            if "global" in params:
-                for key, value in params["global"].items():
-                    if key == "Z_Si":
-                        Z_O = - value / 2
-                        params["SiSiSi"] = {"Zi" : value, "Zj" : value}
-                        params["OOO"] = {"Zi" : Z_O, "Zj" : Z_O}
-                        params["SiOO"] = {"Zi" : value, "Zj" : Z_O}
-                        params["OSiSi"] = {"Zi" : Z_O, "Zj" : value}
-                    elif key == "Z_O":
-                        Z_Si = - 2 * value 
-                        params["SiSiSi"] = {"Zi" : Z_Si, "Zj" : Z_Si}
-                        params["OOO"] = {"Zi" : value, "Zj" : value}
-                        params["SiOO"] = {"Zi" : Z_Si, "Zj" : value}
-                        params["OSiSi"] = {"Zi" : value, "Zj" : Z_Si}
-                    else:
-                        raise NotImplemented
-                del params["global"]
-            if "all" in params:
-                for key, value in params["all"].items():
-                    params["SiSiSi,OOO,SiOO,OSiSi"] = {key : value}
-                del params["all"]
         else:
             raise NotImplementedError("The currently available substances are 'silica' and 'water'")
 
@@ -162,14 +118,78 @@ class Simulator:
         for comb, parameters in params.items():
             combs = comb.split(",")
             for c in combs:
-                for parameter, value in parameters.items():
-                    self.params[c][parameter] = value
-       
+                if c == "global":
+                    if substance == "water":
+                        for key, value in parameters.items():
+                            if key == "Z_O":
+                                Z_H = - value / 2
+                                self.params["HHH"]["Zi"] = Z_H
+                                self.params["HHH"]["Zj"] = Z_H
+                                self.params["OOO"]["Zi"] = value
+                                self.params["OOO"]["Zj"] = value
+                                self.params["HOO"]["Zi"] = Z_H
+                                self.params["HOO"]["Zj"] = value
+                                self.params["OHH"]["Zi"] = value
+                                self.params["OHH"]["Zj"] = Z_H
+                            elif key == "Z_H":
+                                Z_O = - 2 * value
+                                self.params["HHH"]["Zi"] = value
+                                self.params["HHH"]["Zj"] = value
+                                self.params["OOO"]["Zi"] = Z_O
+                                self.params["OOO"]["Zj"] = Z_O
+                                self.params["HOO"]["Zi"] = value
+                                self.params["HOO"]["Zj"] = Z_O
+                                self.params["OHH"]["Zi"] = Z_O
+                                self.params["OHH"]["Zj"] = value
+                            else:
+                                raise NotImplementedError(f"No global parameter {key}")
+                    elif substance == "silica":
+                        for key, value in parameters.items():
+                            if key == "Z_Si":
+                                Z_O = - value / 2
+                                self.params["SiSiSi"]["Zi"] = value
+                                self.params["SiSiSi"]["Zj"] = value
+                                self.params["OOO"]["Zi"] = Z_O
+                                self.params["OOO"]["Zj"] = Z_O
+                                self.params["SiOO"]["Zi"] = value
+                                self.params["SiOO"]["Zj"] = Z_O
+                                self.params["OSiSi"]["Zi"] = Z_O
+                                self.params["OSiSi"]["Zj"] = value
+                            elif key == "Z_O":
+                                Z_Si = - 2 * value
+                                self.params["SiSiSi"]["Zi"] = Z_Si
+                                self.params["SiSiSi"]["Zj"] = Z_Si
+                                self.params["OOO"]["Zi"] = value
+                                self.params["OOO"]["Zj"] = value
+                                self.params["SiOO"]["Zi"] = Z_Si
+                                self.params["SiOO"]["Zj"] = value
+                                self.params["OSiSi"]["Zi"] = value
+                                self.params["OSiSi"]["Zj"] = Z_Si
+                            else:
+                                raise NotImplementedError(f"No global parameter {key}")
+
+                elif c == "all":
+                    for key, value in parameters.items():
+                        if substance == "water":
+                            self.params["HHH"][key] = value
+                            self.params["OOO"][key] = value
+                            self.params["OHH"][key] = value
+                            self.params["HOO"][key] = value
+                        elif substance == "silica":
+                            self.params["SiSiSi"][key] = value
+                            self.params["OOO"][key] = value
+                            self.params["SiOO"][key] = value
+                            self.params["OSiSi"][key] = value
+
+                else:
+                    for parameter, value in parameters.items():
+                        self.params[c][parameter] = value
+
         # Make new parameter file
         this_dir, this_filename = os.path.split(__file__)
         header_filename = this_dir + "/data/header.vashishta"
         self.param_file = filename
-        
+
         copyfile(header_filename, self.wd + self.param_file)
 
         # Add parameters to file
@@ -192,7 +212,7 @@ class Simulator:
             copyfile(filename, self.wd + self.lmp_script)
         else:
             self.lmp_script = filename
-            
+
     def run(self, computer=CPU(num_procs=4)):
         """Run simulation
 
