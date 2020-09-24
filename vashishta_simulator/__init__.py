@@ -1,5 +1,5 @@
 import os
-from shutil import copyfile
+import shutil
 from re import findall
 
 class Simulator:
@@ -33,23 +33,16 @@ class Simulator:
                     self.wd = directory + f"_{ext}"
         self.wd += "/"
 
-    def copy_to_wd(self, filename):
+    def copy_to_wd(self, *filename):
         """Copy one or several files to working directory.
 
         :param filename: filename or list of filenames to copy
         :type filename: str or list of str
         """
 
-        if type(filename) is str:
-            filename = [filename]
-        elif type(filename) is list:
-            pass
-        else:
-            raise TypeError("Argument 'filename' was to be str or list of str")
-
         for file in filename:
             head, tail = os.path.split(file)
-            copyfile(file, self.wd + tail)
+            shutil.copyfile(file, self.wd + tail)
 
     def ordered_parameter_string(self, params, param_suffices, param_list, string):
         """Returning an ordered list of all the parameter values
@@ -190,7 +183,7 @@ class Simulator:
         header_filename = this_dir + "/data/header.vashishta"
         self.param_file = filename
 
-        copyfile(header_filename, self.wd + self.param_file)
+        shutil.copyfile(header_filename, self.wd + self.param_file)
 
         # Add parameters to file
         for name, params in self.params.items():
@@ -209,7 +202,7 @@ class Simulator:
         self.var = var
         if copy:
             head, self.lmp_script = os.path.split(filename)
-            copyfile(filename, self.wd + self.lmp_script)
+            shutil.copyfile(filename, self.wd + self.lmp_script)
         else:
             self.lmp_script = filename
 
