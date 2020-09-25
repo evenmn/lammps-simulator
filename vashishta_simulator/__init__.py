@@ -189,7 +189,7 @@ class Simulator:
         for name, params in self.params.items():
             self.append_type_to_file(name, params, self.wd + self.param_file)
 
-    def set_lammps_script(self, filename, var={}, copy=True):
+    def set_lammps_script(self, filename, copy=True, var**):
         """Set LAMMPS script
 
         :param filename: LAMMPS input script
