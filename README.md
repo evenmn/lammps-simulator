@@ -1,5 +1,5 @@
 # LAMMPS simulator
-Python package for launching simulations in LAMMPS. The current version supports the Vashishta potential only, but can easily be extended to other potentials. The code is oriented around the ```Simulator``` class, which takes a working directory as argument. The simulation is run from the working directory, and the philosophy is that all the files used are copied to this directory.
+Python package for launching simulations in LAMMPS. The code is oriented around the ```Simulator``` class, which takes a working directory as argument. The simulation is run from the working directory, and the philosophy is that all the files used are copied to this directory.
 
 ## Installation
 First download the contents:
