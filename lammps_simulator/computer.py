@@ -1,5 +1,6 @@
 import os
 
+
 class Computer:
     """This is the parent computer class, which controls how
     to run LAMMPS. The required methods are __init__ and __call__
@@ -47,6 +48,7 @@ class Computer:
 
         return call_string
 
+
 class CPU(Computer):
     """ Run simulations on desk computer. This method runs the executable
         mpirun -n {num_procs} lmp_mpi script.in
@@ -63,6 +65,7 @@ class CPU(Computer):
         self.num_procs = num_procs
         self.lmp_exec = lmp_exec
         self.lmp_args = lmp_args
+        self.slurm = False
 
     def __str__(self):
         return "CPU"
@@ -72,6 +75,7 @@ class CPU(Computer):
 
         call_string = self.run_lammps(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
         os.system(call_string)
+
 
 class GPU(Computer):
     """ Run simulations on gpu.
@@ -86,10 +90,11 @@ class GPU(Computer):
     def __init__(self, gpu_per_node=1, lmp_exec="lmp_kokkos_cuda_mpi", lmp_args={}):
         self.gpu_per_node = gpu_per_node
         self.lmp_exec = lmp_exec
+        self.slurm = False
 
-        default_lmp_args = {"-pk" : "kokkos newton on comm no",
-                            "-k" : f"on g {self.gpu_per_node}",
-                            "-sf" : "kk"}
+        default_lmp_args = {"-pk": "kokkos newton on comm no",
+                            "-k": f"on g {self.gpu_per_node}",
+                            "-sf": "kk"}
         self.lmp_args = {**default_lmp_args, **lmp_args}    # merge
 
     def __str__(self):
@@ -100,6 +105,7 @@ class GPU(Computer):
 
         call_string = self.run_lammps(self.gpu_per_node, self.lmp_exec, self.lmp_args, lmp_var)
         os.system(call_string)
+
 
 class SlurmCPU(Computer):
     """ Run LAMMPS simulations on CPU cluster with the Slurm queueing system.
@@ -121,31 +127,31 @@ class SlurmCPU(Computer):
     :param jobscript: name of the jobscript
     :type jobscript: str
     """
-    def __init__(self, num_nodes,
-                       lmp_exec="lmp_mpi",
-                       lmp_args={},
-                       slurm_args={},
-                       procs_per_node=16,
-                       lmp_module="LAMMPS/13Mar18-foss-2018a",
-                       generate_jobscript=True,
-                       jobscript="jobscript"):
+    def __init__(self,
+                 num_nodes,
+                 lmp_exec="lmp_mpi",
+                 lmp_args={},
+                 slurm_args={},
+                 procs_per_node=16,
+                 lmp_module="LAMMPS/13Mar18-foss-2018a",
+                 generate_jobscript=True,
+                 jobscript="jobscript"):
         self.num_nodes = num_nodes
         self.num_procs = num_nodes * procs_per_node
         self.lmp_exec = lmp_exec
         self.lmp_module = lmp_module
         self.generate_jobscript = generate_jobscript
         self.jobscript = jobscript
+        self.slurm = True
 
-        default_slurm_args = {"job-name" : "CPU-job",
-                              "account" : "nn9272k",
-                              "time" : "05:00:00",
-                              "partition" : "normal",
-                              "ntasks" : str(self.num_procs),
-                              "nodes" : str(self.num_nodes),
-                              "output" : "slurm.out",
-                              #"mem-per-cpu" : str(3800),
-                              #"mail-type" : "BEGIN,TIME_LIMIT_10,END",
-                             }
+        default_slurm_args = {"job-name": "CPU-job",
+                              "account": "nn9272k",
+                              "time": "05:00:00",
+                              "partition": "normal",
+                              "ntasks": str(self.num_procs),
+                              "nodes": str(self.num_nodes),
+                              "output": "slurm.out",
+                              }
 
         self.slurm_args = {**default_slurm_args, **slurm_args}
         self.lmp_args = lmp_args
@@ -198,30 +204,30 @@ class SlurmGPU(Computer):
     :param jobscript: name of the jobscript
     :type jobscript: str
     """
-    def __init__(self, gpu_per_node=1,
-                       lmp_exec="lmp",
-                       lmp_args={},
-                       slurm_args={},
-                       generate_jobscript=True,
-                       jobscript="jobscript"):
+    def __init__(self,
+                 gpu_per_node=1,
+                 lmp_exec="lmp",
+                 lmp_args={},
+                 slurm_args={},
+                 generate_jobscript=True,
+                 jobscript="jobscript"):
         self.gpu_per_node = gpu_per_node
         self.lmp_exec = lmp_exec
         self.generate_jobscript = generate_jobscript
         self.jobscript = jobscript
+        self.slurm = True
 
-        default_slurm_args = {"job-name" : "GPU-job",
-                              "partition" : "normal",
-                              "ntasks" : str(self.gpu_per_node),
-                              "cpus-per-task" : "2",
-                              "gres" : "gpu:" + str(self.gpu_per_node),
-                              "output" : "slurm.out",
-                              #"mem-per-cpu" : str(3800),
-                              #"mail-type" : "BEGIN,TIME_LIMIT_10,END",
-                             }
+        default_slurm_args = {"job-name": "GPU-job",
+                              "partition": "normal",
+                              "ntasks": str(self.gpu_per_node),
+                              "cpus-per-task": "2",
+                              "gres": "gpu:" + str(self.gpu_per_node),
+                              "output": "slurm.out",
+                              }
 
-        default_lmp_args = {"-pk" : "kokkos newton on neigh half",
-                            "-k" : f"on g {self.gpu_per_node}",
-                            "-sf" : "kk"}
+        default_lmp_args = {"-pk": "kokkos newton on neigh half",
+                            "-k": f"on g {self.gpu_per_node}",
+                            "-sf": "kk"}
         self.lmp_args = {**default_lmp_args, **lmp_args}    # merge
 
         self.slurm_args = {**default_slurm_args, **slurm_args}
