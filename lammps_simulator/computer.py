@@ -86,15 +86,29 @@ class GPU(Computer):
     :type lmp_exec: str
     :param lmp_args: command line arguments
     :type lmp_args: dict
+    :param mode: GPU mode, has to be either 'kokkos' or 'gpu'
+    :type mode: str
     """
-    def __init__(self, gpu_per_node=1, lmp_exec="lmp_kokkos_cuda_mpi", lmp_args={}):
+    def __init__(self,
+                 gpu_per_node=1,
+                 lmp_exec="lmp_kokkos_cuda_mpi",
+                 lmp_args={},
+                 mode="kokkos"):
         self.gpu_per_node = gpu_per_node
         self.lmp_exec = lmp_exec
         self.slurm = False
 
-        default_lmp_args = {"-pk": "kokkos newton on comm no",
-                            "-k": f"on g {self.gpu_per_node}",
-                            "-sf": "kk"}
+        if mode == "kokkos":
+            default_lmp_args = {"-pk": "kokkos newton on comm no",
+                                "-k": f"on g {self.gpu_per_node}",
+                                "-sf": "kk"}
+        elif mode == "gpu":
+            default_lmp_args = {"-pk": "gpu newton on comm no",
+                                "-k": f"on g {self.gpu_per_node}",
+                                "-sf": "gpu"}
+        else:
+            raise NotImplementedError
+
         self.lmp_args = {**default_lmp_args, **lmp_args}    # merge
 
     def __str__(self):
@@ -203,6 +217,8 @@ class SlurmGPU(Computer):
     :type generate_jobscript: bool
     :param jobscript: name of the jobscript
     :type jobscript: str
+    :param mode: GPU mode, has to be either 'kokkos' or 'gpu'
+    :type mode: str
     """
     def __init__(self,
                  gpu_per_node=1,
@@ -210,7 +226,8 @@ class SlurmGPU(Computer):
                  lmp_args={},
                  slurm_args={},
                  generate_jobscript=True,
-                 jobscript="jobscript"):
+                 jobscript="jobscript",
+                 mode="kokkos"):
         self.gpu_per_node = gpu_per_node
         self.lmp_exec = lmp_exec
         self.generate_jobscript = generate_jobscript
@@ -225,9 +242,17 @@ class SlurmGPU(Computer):
                               "output": "slurm.out",
                               }
 
-        default_lmp_args = {"-pk": "kokkos newton on neigh half",
-                            "-k": f"on g {self.gpu_per_node}",
-                            "-sf": "kk"}
+        if mode == "kokkos":
+            default_lmp_args = {"-pk": "kokkos newton on comm no",
+                                "-k": f"on g {self.gpu_per_node}",
+                                "-sf": "kk"}
+        elif mode == "gpu":
+            default_lmp_args = {"-pk": "gpu newton on comm no",
+                                "-k": f"on g {self.gpu_per_node}",
+                                "-sf": "gpu"}
+        else:
+            raise NotImplementedError
+
         self.lmp_args = {**default_lmp_args, **lmp_args}    # merge
 
         self.slurm_args = {**default_slurm_args, **slurm_args}
