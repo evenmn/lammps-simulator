@@ -19,7 +19,7 @@ class Simulator:
             self.wd = directory
             try:
                 os.makedirs(directory)
-            except:
+            except FileExistsError:
                 pass
         else:
             ext = 0
