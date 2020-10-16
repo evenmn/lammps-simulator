@@ -1,6 +1,6 @@
 import os
 import shutil
-from re import findall
+
 
 class Simulator:
     """Initialize class
@@ -23,11 +23,11 @@ class Simulator:
                 pass
         else:
             ext = 0
-            repeat=True
+            repeat = True
             while repeat:
                 try:
                     os.makedirs(self.wd)
-                    repeat=False
+                    repeat = False
                 except FileExistsError:
                     ext += 1
                     self.wd = directory + f"_{ext}"
@@ -64,7 +64,7 @@ class Simulator:
     def run(self, computer=CPU(num_procs=4)):
         """Run simulation
 
-        :param computer: how to run the simulation. Options are 'CPU', 'GPU', 'SlurmCPU' and 'SlurmGPU', see computer.py
+        :param computer: how to run the simulation, see computer.py for opt
         :type computer: obj
         """
         main_path = os.getcwd()
