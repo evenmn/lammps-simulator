@@ -26,7 +26,7 @@ class Computer:
                                   .format(self.__class__.__name__))
 
     @staticmethod
-    def run_lammps(num_procs, lmp_exec, lmp_args, lmp_var):
+    def get_exec_str(num_procs, lmp_exec, lmp_args, lmp_var):
         """Run LAMMPS script lmp_script using executable lmp_exec on num_procs
         processes with command line arguments specified by lmp_args
 
@@ -39,14 +39,14 @@ class Computer:
         :param lmp_var: lmp_variables defined by the command line
         :type lmp_var: dict
         """
-        call_string = f"mpirun -n {num_procs} {lmp_exec} "
+        exec_string = f"mpirun -n {num_procs} {lmp_exec} "
         for key, value in lmp_args.items():
-            call_string += f"{key} {value} "
+            exec_str += f"{key} {value} "
 
         for key, value in lmp_var.items():
-            call_string += f"-var {key} {value} "
+            exec_str += f"-var {key} {value} "
 
-        return call_string
+        return exec_str
 
 
 class CPU(Computer):
@@ -73,8 +73,8 @@ class CPU(Computer):
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
 
-        call_string = self.run_lammps(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
-        os.system(call_string)
+        exec_str = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+        os.system(exec_str)
 
 
 class GPU(Computer):
@@ -117,8 +117,8 @@ class GPU(Computer):
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
 
-        call_string = self.run_lammps(self.gpu_per_node, self.lmp_exec, self.lmp_args, lmp_var)
-        os.system(call_string)
+        exec_str = self.get_exec_str(self.gpu_per_node, self.lmp_exec, self.lmp_args, lmp_var)
+        os.system(exec_str)
 
 
 class SlurmCPU(Computer):
@@ -192,7 +192,7 @@ class SlurmCPU(Computer):
             f.write("module purge\n")
             f.write("set -o errexit\n\n")
             f.write(f"module load {self.lmp_module}\n\n")
-            f.write(self.run_lammps(self.num_procs, self.lmp_exec, lmp_args, lmp_var))
+            f.write(self.get_exec_str(self.num_procs, self.lmp_exec, lmp_args, lmp_var))
 
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
@@ -275,7 +275,7 @@ class SlurmGPU(Computer):
                 f.write(f"#SBATCH --{key}={setting}\n#\n")
 
             f.write("echo $CUDA_VISIBLE_DEVICES\n")
-            f.write(self.run_lammps(self.gpu_per_node, self.lmp_exec, lmp_args, lmp_var))
+            f.write(self.get_exec_str(self.gpu_per_node, self.lmp_exec, lmp_args, lmp_var))
 
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
