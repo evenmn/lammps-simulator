@@ -102,7 +102,7 @@ class Custom(Computer):
         if self.slurm:
             if self.generate_jobscript:
                 self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
-            output = subprocess.check_output(["sbatch", self.jobscript])
+            output = str(subprocess.check_output(["sbatch", self.jobscript]))
             job_id = int(re.findall("([0-9]+)", output)[0])
             return job_id
         else:
@@ -260,7 +260,7 @@ class SlurmCPU(Computer):
         if self.generate_jobscript:
             exec_list = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
             self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
-        output = subprocess.check_output(["sbatch", self.jobscript])
+        output = str(subprocess.check_output(["sbatch", self.jobscript]))
         job_id = int(re.findall("([0-9]+)", output)[0])
         return job_id
 
@@ -346,6 +346,6 @@ class SlurmGPU(Computer):
         if self.generate_jobscript:
             exec_list = self.get_exec_list(self.gpu_per_node, self.lmp_exec, self.lmp_args, lmp_var)
             self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
-        output = subprocess.check_output(["sbatch", self.jobscript])
+        output = str(subprocess.check_output(["sbatch", self.jobscript]))
         job_id = int(re.findall("([0-9]+)", output)[0])
         return job_id
