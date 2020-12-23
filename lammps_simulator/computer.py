@@ -1,4 +1,5 @@
-import os
+import re
+import subprocess
 
 
 class Computer:
@@ -26,7 +27,7 @@ class Computer:
                                   .format(self.__class__.__name__))
 
     @staticmethod
-    def run_lammps(num_procs, lmp_exec, lmp_args, lmp_var):
+    def get_exec_list(num_procs, lmp_exec, lmp_args, lmp_var):
         """Run LAMMPS script lmp_script using executable lmp_exec on num_procs
         processes with command line arguments specified by lmp_args
 
@@ -39,14 +40,74 @@ class Computer:
         :param lmp_var: lmp_variables defined by the command line
         :type lmp_var: dict
         """
-        call_string = f"mpirun -n {num_procs} {lmp_exec} "
+        exec_list = ["mpirun", "-n", str(num_procs), lmp_exec]
         for key, value in lmp_args.items():
-            call_string += f"{key} {value} "
-
+            exec_list.extend([key, str(value)])
         for key, value in lmp_var.items():
-            call_string += f"-var {key} {value} "
+            exec_list.extend(["-var", str(value)])
+        return exec_list
 
-        return call_string
+    @staticmethod
+    def gen_jobscript(exec_list, jobscript, slurm_args):
+        """Generate jobscript.
+
+        :param exec_list: list of strings to be executed
+        :type exec_list: list
+        :param jobscript: name of jobscript to be generated
+        :type jobscript: str
+        :param slurm_args: slurm arguments to be used
+        :type slurm_args: dict
+        """
+        with open(jobscript, "w") as f:
+            f.write("#!/bin/bash\n\n")
+            for key, setting in slurm_args.items():
+                f.write(f"#SBATCH --{key}={setting}\n#\n")
+            f.write("\n")
+            f.write(" ".join(exec_list))
+
+
+class Custom(Computer):
+    """Run simulations. This method runs the executable
+
+        mpirun -n {num_procs} {lmp_exec} {lmp_script}
+
+    :param num_procs: number of processes. Default 4
+    :type num_procs: int
+    :param lmp_exec: LAMMPS executable
+    :type lmp_exec: str
+    :param lmp_args: command line arguments
+    :type lmp_args: dict
+    """
+    def __init__(self, num_procs=1, lmp_exec="lmp_mpi", lmp_args={},
+                 slurm=False, slurm_args={}, generate_jobscript=True,
+                 jobscript="jobscript"):
+        self.num_procs = num_procs
+        self.lmp_exec = lmp_exec
+        self.lmp_args = lmp_args
+        self.slurm = slurm
+        self.slurm_args = slurm_args
+        self.generate_jobscript = generate_jobscript
+        self.jobscript = jobscript
+
+    def __str__(self):
+        repr = "General"
+        if self.slurm:
+            repr += "(slurm)"
+        return repr
+
+    def __call__(self, lmp_script, lmp_var):
+        self.lmp_args["-in"] = lmp_script
+
+        exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+        if self.slurm:
+            if self.generate_jobscript:
+                self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
+            output = str(subprocess.check_output(["sbatch", self.jobscript]))
+            print(output)
+            job_id = int(re.findall("([0-9]+)", output)[0])
+            return job_id
+        else:
+            subprocess.run(exec_list, shell=True)
 
 
 class CPU(Computer):
@@ -73,8 +134,8 @@ class CPU(Computer):
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
 
-        call_string = self.run_lammps(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
-        os.system(call_string)
+        exec_list = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+        subprocess.run(exec_list, shell=True)
 
 
 class GPU(Computer):
@@ -117,8 +178,8 @@ class GPU(Computer):
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
 
-        call_string = self.run_lammps(self.gpu_per_node, self.lmp_exec, self.lmp_args, lmp_var)
-        os.system(call_string)
+        exec_list = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+        subprocess.run(exec_list, shell=True)
 
 
 class SlurmCPU(Computer):
@@ -173,7 +234,7 @@ class SlurmCPU(Computer):
     def __str__(self):
         return "CPU cluster"
 
-    def gen_jobscript(self, lmp_args, lmp_var):
+    def gen_jobscript_(self, lmp_args, lmp_var):
         """ Generate jobscript.
 
         :param lmp_args: command line arguments
@@ -192,14 +253,18 @@ class SlurmCPU(Computer):
             f.write("module purge\n")
             f.write("set -o errexit\n\n")
             f.write(f"module load {self.lmp_module}\n\n")
-            f.write(self.run_lammps(self.num_procs, self.lmp_exec, lmp_args, lmp_var))
+            f.write(self.get_exec_str(self.num_procs, self.lmp_exec, lmp_args, lmp_var))
 
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
 
         if self.generate_jobscript:
-            self.gen_jobscript(self.lmp_args, lmp_var)
-        os.system(f"sbatch {self.jobscript}")
+            exec_list = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+            self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
+        output = str(subprocess.check_output(["sbatch", self.jobscript]))
+        print(output)
+        job_id = int(re.findall("([0-9]+)", output)[0])
+        return job_id
 
 
 class SlurmGPU(Computer):
@@ -260,7 +325,7 @@ class SlurmGPU(Computer):
     def __str__(self):
         return "GPU cluster"
 
-    def gen_jobscript(self, lmp_args, lmp_var):
+    def gen_jobscript_(self, lmp_args, lmp_var):
         """ Generate jobscript.
 
         :param lmp_args: command line arguments
@@ -275,11 +340,15 @@ class SlurmGPU(Computer):
                 f.write(f"#SBATCH --{key}={setting}\n#\n")
 
             f.write("echo $CUDA_VISIBLE_DEVICES\n")
-            f.write(self.run_lammps(self.gpu_per_node, self.lmp_exec, lmp_args, lmp_var))
+            f.write(self.get_exec_str(self.gpu_per_node, self.lmp_exec, lmp_args, lmp_var))
 
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
 
         if self.generate_jobscript:
-            self.gen_jobscript(self.lmp_args, lmp_var)
-        os.system(f"sbatch {self.jobscript}")
+            exec_list = self.get_exec_list(self.gpu_per_node, self.lmp_exec, self.lmp_args, lmp_var)
+            self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
+        output = str(subprocess.check_output(["sbatch", self.jobscript]))
+        print(output)
+        job_id = int(re.findall("([0-9]+)", output)[0])
+        return job_id
