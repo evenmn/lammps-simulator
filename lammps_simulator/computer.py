@@ -147,11 +147,11 @@ class General(Computer):
                 # self.gen_jobscript(exec_str, self.jobscript, self.slurm_args)
                 self.gen_jobscript2(exec_list, self.jobscript, self.slurm_args)
             # os.system(f"sbatch {self.jobscript}")
-            output = subprocess.check_output(["sbatch", self.jobscript])
+            output = subprocess.check_output(["sbatch", self.jobscript], shell=True)
             job_id = int(re.findall("([0-9]+)", output)[0])
             return job_id
         else:
-            subprocess.Popen(exec_list)
+            subprocess.run(exec_list, shell=True)
             # os.system(exec_str)
 
 
@@ -182,7 +182,7 @@ class CPU(Computer):
         # exec_str = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
         exec_list = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
         # os.system(exec_str)
-        subprocess.Popen(exec_list)
+        subprocess.run(exec_list, shell=True)
 
 
 class GPU(Computer):
@@ -228,7 +228,7 @@ class GPU(Computer):
         # exec_str = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
         exec_list = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
         # os.system(exec_str)
-        subprocess.Popen(exec_list)
+        subprocess.run(exec_list, shell=True)
 
 
 class SlurmCPU(Computer):
@@ -311,7 +311,7 @@ class SlurmCPU(Computer):
             # self.gen_jobscript(self.lmp_args, lmp_var)
             self.gen_jobscript2(exec_list, self.jobscript, self.slurm_args)
         # os.system(f"sbatch {self.jobscript}")
-        output = subprocess.check_output(["sbatch", self.jobscript])
+        output = subprocess.check_output(["sbatch", self.jobscript], shell=True)
         job_id = int(re.findall("([0-9]+)", output)[0])
         return job_id
 
@@ -398,6 +398,6 @@ class SlurmGPU(Computer):
             # self.gen_jobscript(self.lmp_args, lmp_var)
             self.gen_jobscript2(exec_list, self.jobscript, self.slurm_args)
         # os.system(f"sbatch {self.jobscript}")
-        output = subprocess.check_output(["sbatch", self.jobscript])
+        output = subprocess.check_output(["sbatch", self.jobscript], shell=True)
         job_id = int(re.findall("([0-9]+)", output)[0])
         return job_id
