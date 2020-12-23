@@ -39,7 +39,7 @@ class Computer:
         :param lmp_var: lmp_variables defined by the command line
         :type lmp_var: dict
         """
-        exec_string = f"mpirun -n {num_procs} {lmp_exec} "
+        exec_str = f"mpirun -n {num_procs} {lmp_exec} "
         for key, value in lmp_args.items():
             exec_str += f"{key} {value} "
 
@@ -47,6 +47,65 @@ class Computer:
             exec_str += f"-var {key} {value} "
 
         return exec_str
+
+    @staticmethod
+    def gen_jobscript(exec_str, jobscript, slurm_args):
+        """Generate jobscript.
+
+        :param exec_str: string to be executed
+        :type exec_str: str
+        :param jobscript: name of jobscript to be generated
+        :type jobscript: str
+        :param slurm_args: slurm arguments to be used
+        :type slurm_args: dict
+        """
+        with open(jobscript, "w") as f:
+            f.write("#!/bin/bash\n\n")
+            for key, setting in slurm_args.items():
+                f.write(f"#SBATCH --{key}={setting}\n#\n")
+            f.write("\n")
+            f.write(exec_str)
+
+
+class General(Computer):
+    """Run simulations. This method runs the executable
+
+        mpirun -n {num_procs} {lmp_exec} {lmp_script}
+
+    :param num_procs: number of processes. Default 4
+    :type num_procs: int
+    :param lmp_exec: LAMMPS executable
+    :type lmp_exec: str
+    :param lmp_args: command line arguments
+    :type lmp_args: dict
+    """
+    def __init__(self, num_procs=1, lmp_exec="lmp_mpi", lmp_args={},
+                 slurm=False, slurm_args={}, generate_jobscript=True,
+                 jobscript="jobscript"):
+        self.num_procs = num_procs
+        self.lmp_exec = lmp_exec
+        self.lmp_args = lmp_args
+        self.slurm = slurm
+        self.slurm_args = slurm_args
+        self.generate_jobscript = generate_jobscript
+        self.jobscript = jobscript
+
+    def __str__(self):
+        repr = "General"
+        if self.slurm:
+            repr += "(slurm)"
+        return repr
+
+    def __call__(self, lmp_script, lmp_var):
+        self.lmp_args["-in"] = lmp_script
+
+        exec_str = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+        if self.slurm:
+            if self.generate_jobscript:
+                self.gen_jobscript(exec_str, self.jobscript, self.slurm_args)
+            os.system(f"sbatch {self.jobscript}")
+        else:
+            os.system(exec_str)
 
 
 class CPU(Computer):
