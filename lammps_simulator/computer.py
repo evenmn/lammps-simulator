@@ -232,7 +232,7 @@ class SlurmCPU(Computer):
     def __str__(self):
         return "CPU cluster"
 
-    def gen_jobscript(self, lmp_args, lmp_var):
+    def gen_jobscript_(self, lmp_args, lmp_var):
         """ Generate jobscript.
 
         :param lmp_args: command line arguments
@@ -322,7 +322,7 @@ class SlurmGPU(Computer):
     def __str__(self):
         return "GPU cluster"
 
-    def gen_jobscript(self, lmp_args, lmp_var):
+    def gen_jobscript_(self, lmp_args, lmp_var):
         """ Generate jobscript.
 
         :param lmp_args: command line arguments
