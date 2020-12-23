@@ -16,7 +16,6 @@ class Simulator:
     def __init__(self, directory, overwrite=False):
         self.wd = directory
         if overwrite:
-            self.wd = directory
             try:
                 os.makedirs(directory)
             except FileExistsError:
