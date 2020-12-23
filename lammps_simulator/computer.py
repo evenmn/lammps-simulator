@@ -44,7 +44,7 @@ class Computer:
         for key, value in lmp_args.items():
             exec_list.extend([key, str(value)])
         for key, value in lmp_var.items():
-            exec_list.extend(["-var", str(value)])
+            exec_list.extend(["-var", key, str(value)])
         return exec_list
 
     @staticmethod
