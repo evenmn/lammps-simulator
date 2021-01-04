@@ -68,5 +68,6 @@ class Simulator:
         """
         main_path = os.getcwd()
         os.chdir(self.wd)
-        computer(self.lmp_script, self.var)
+        job_id = computer(self.lmp_script, self.var)
         os.chdir(main_path)
+        return job_id
