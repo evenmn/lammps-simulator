@@ -182,7 +182,7 @@ class GPU(Computer):
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
 
-        exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+        exec_list = self.get_exec_list(self.gpu_per_node, self.lmp_exec, self.lmp_args, lmp_var)
         procs = subprocess.Popen(exec_list)
         job_id = procs.pid
         print(f"Simulation started with job ID {job_id}")
