@@ -99,7 +99,6 @@ class Custom(Computer):
         self.lmp_args["-in"] = lmp_script
 
         exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
-        print(exec_list)
         if self.slurm:
             if self.generate_jobscript:
                 self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
@@ -136,7 +135,7 @@ class CPU(Computer):
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
 
-        exec_list = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+        exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
         procs = subprocess.Popen(exec_list)
         job_id = procs.pid
         print(f"Simulation started with job ID {job_id}")
@@ -183,7 +182,7 @@ class GPU(Computer):
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
 
-        exec_list = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+        exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
         procs = subprocess.Popen(exec_list)
         job_id = procs.pid
         print(f"Simulation started with job ID {job_id}")
@@ -267,7 +266,7 @@ class SlurmCPU(Computer):
         self.lmp_args["-in"] = lmp_script
 
         if self.generate_jobscript:
-            exec_list = self.get_exec_str(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+            exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
             self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
         output = str(subprocess.check_output(["sbatch", self.jobscript]))
         job_id = int(re.findall("([0-9]+)", output)[0])
