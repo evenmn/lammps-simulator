@@ -28,16 +28,18 @@ class Computer:
 
     @staticmethod
     def get_exec_list(num_procs, lmp_exec, lmp_args, lmp_var):
-        """Run LAMMPS script lmp_script using executable lmp_exec on num_procs
-        processes with command line arguments specified by lmp_args
+        """Making a list with all mpirun arguments:
+
+            list = ['mpirun', '-n', {num_procs}, {lmp_exec}, '-in',
+                    {lmp_script}, {lmp_args}, {lmp_var}]
 
         :param num_procs: number of processes
         :type num_procs: int
         :param lmp_exec: LAMMPS executable
         :type lmp_exec: str
-        :param lmp_args: command line arguments
+        :param lmp_args: LAMMPS command line arguments
         :type lmp_args: dict
-        :param lmp_var: lmp_variables defined by the command line
+        :param lmp_var: LAMMPS variables defined by the command line
         :type lmp_var: dict
         """
         exec_list = ["mpirun", "-n", str(num_procs), lmp_exec]
@@ -49,7 +51,13 @@ class Computer:
 
     @staticmethod
     def gen_jobscript(exec_list, jobscript, slurm_args):
-        """Generate jobscript.
+        """Generate jobscript:
+
+            #!/bin/bash
+            #SBATCH --{key1}={value1}
+            #SBATCH --{key2}={value2}
+            ...
+            mpirun -n {num_procs} {lmp_exec} -in {lmp_script} {lmp_args} {lmp_var}
 
         :param exec_list: list of strings to be executed
         :type exec_list: list
@@ -100,7 +108,7 @@ class Custom(Computer):
     def __str__(self):
         repr = "Custom"
         if self.slurm:
-            repr += "(slurm)"
+            repr += " (slurm)"
         return repr
 
     def __call__(self, lmp_script, lmp_var):
@@ -246,7 +254,7 @@ class SlurmCPU(Computer):
         self.lmp_args = lmp_args
 
     def __str__(self):
-        return "CPU cluster"
+        return "CPU (slurm)"
 
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
@@ -316,7 +324,7 @@ class SlurmGPU(Computer):
         self.slurm_args = {**default_slurm_args, **slurm_args}
 
     def __str__(self):
-        return "GPU cluster"
+        return "GPU (slurm)"
 
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
