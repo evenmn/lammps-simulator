@@ -80,7 +80,7 @@ class Custom(Computer):
     """
     def __init__(self, num_procs=1, lmp_exec="lmp", lmp_args={},
                  slurm=False, slurm_args={}, generate_jobscript=True,
-                 jobscript="jobscript"):
+                 jobscript="job.sh"):
         self.num_procs = num_procs
         self.lmp_exec = lmp_exec
         self.lmp_args = lmp_args
@@ -217,7 +217,7 @@ class SlurmCPU(Computer):
                  slurm_args={},
                  procs_per_node=16,
                  generate_jobscript=True,
-                 jobscript="jobscript"):
+                 jobscript="job.sh"):
         self.num_nodes = num_nodes
         self.num_procs = num_nodes * procs_per_node
         self.lmp_exec = lmp_exec
@@ -274,7 +274,7 @@ class SlurmGPU(Computer):
                  lmp_args={},
                  slurm_args={},
                  generate_jobscript=True,
-                 jobscript="jobscript",
+                 jobscript="job.sh",
                  mode="kokkos"):
         self.gpu_per_node = gpu_per_node
         self.lmp_exec = lmp_exec
