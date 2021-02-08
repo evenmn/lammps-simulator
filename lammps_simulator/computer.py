@@ -216,20 +216,16 @@ class SlurmCPU(Computer):
                  lmp_args={},
                  slurm_args={},
                  procs_per_node=16,
-                 lmp_module="LAMMPS/13Mar18-foss-2018a",
                  generate_jobscript=True,
                  jobscript="jobscript"):
         self.num_nodes = num_nodes
         self.num_procs = num_nodes * procs_per_node
         self.lmp_exec = lmp_exec
-        self.lmp_module = lmp_module
         self.generate_jobscript = generate_jobscript
         self.jobscript = jobscript
         self.slurm = True
 
         default_slurm_args = {"job-name": "CPU-job",
-                              "account": "nn9272k",
-                              "time": "05:00:00",
                               "partition": "normal",
                               "ntasks": str(self.num_procs),
                               "nodes": str(self.num_nodes),
@@ -241,27 +237,6 @@ class SlurmCPU(Computer):
 
     def __str__(self):
         return "CPU cluster"
-
-    def gen_jobscript_(self, lmp_args, lmp_var):
-        """ Generate jobscript.
-
-        :param lmp_args: command line arguments
-        :type lmp_args: dict
-        :param lmp_var: LAMMPS lmp_variables defined by the command line
-        :type lmp_var: dict
-        """
-
-        with open(self.jobscript, "w") as f:
-            f.write("#!/bin/bash\n\n")
-            for key, setting in self.slurm_args.items():
-                f.write(f"#SBATCH --{key}={setting}\n#\n")
-
-            f.write("## Set up job environment:\n")
-            f.write("source /cluster/bin/jobsetup\n")
-            f.write("module purge\n")
-            f.write("set -o errexit\n\n")
-            f.write(f"module load {self.lmp_module}\n\n")
-            f.write(self.get_exec_str(self.num_procs, self.lmp_exec, lmp_args, lmp_var))
 
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
