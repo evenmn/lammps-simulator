@@ -22,6 +22,8 @@ class Computer:
         :type lmp_script: str
         :param lmp_var: LAMMPS lmp_variables defined by the command line
         :type lmp_var: dict
+        :returns: job-ID
+        :rtype: int
         """
         raise NotImplementedError("Class {} has no instance '__call__'."
                                   .format(self.__class__.__name__))
@@ -41,6 +43,8 @@ class Computer:
         :type lmp_args: dict
         :param lmp_var: LAMMPS variables defined by the command line
         :type lmp_var: dict
+        :returns: list with mpirun executables
+        :rtype: list of str
         """
         exec_list = ["mpirun", "-n", str(num_procs), lmp_exec]
         for key, value in lmp_args.items():
