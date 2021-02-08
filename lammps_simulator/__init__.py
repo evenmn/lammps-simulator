@@ -36,7 +36,7 @@ class Simulator:
         """Copy one or several files to working directory.
 
         :param filename: filename or list of filenames to copy
-        :type filename: str or tuple of strs
+        :type filename: str or tuple of str
         """
 
         for file in filename:
