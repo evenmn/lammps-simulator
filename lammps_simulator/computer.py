@@ -11,7 +11,7 @@ class Computer:
     :param lmp_args: command line arguments
     :type lmp_args: dict
     """
-    def __init__(self, lmp_exec="lmp_mpi", lmp_args={}):
+    def __init__(self, lmp_exec="lmp", lmp_args={}):
         raise NotImplementedError("Class {} has no instance '__init__'."
                                   .format(self.__class__.__name__))
 
@@ -78,7 +78,7 @@ class Custom(Computer):
     :param lmp_args: command line arguments
     :type lmp_args: dict
     """
-    def __init__(self, num_procs=1, lmp_exec="lmp_mpi", lmp_args={},
+    def __init__(self, num_procs=1, lmp_exec="lmp", lmp_args={},
                  slurm=False, slurm_args={}, generate_jobscript=True,
                  jobscript="jobscript"):
         self.num_procs = num_procs
@@ -124,7 +124,7 @@ class CPU(Computer):
     :param lmp_args: command line arguments
     :type lmp_args: dict
     """
-    def __init__(self, num_procs=4, lmp_exec="lmp_mpi", lmp_args={}):
+    def __init__(self, num_procs=4, lmp_exec="lmp", lmp_args={}):
         self.num_procs = num_procs
         self.lmp_exec = lmp_exec
         self.lmp_args = lmp_args
@@ -157,7 +157,7 @@ class GPU(Computer):
     """
     def __init__(self,
                  gpu_per_node=1,
-                 lmp_exec="lmp_kokkos_cuda_mpi",
+                 lmp_exec="lmp",
                  lmp_args={},
                  mode="kokkos"):
         self.gpu_per_node = gpu_per_node
@@ -212,7 +212,7 @@ class SlurmCPU(Computer):
     """
     def __init__(self,
                  num_nodes,
-                 lmp_exec="lmp_mpi",
+                 lmp_exec="lmp",
                  lmp_args={},
                  slurm_args={},
                  procs_per_node=16,
