@@ -308,23 +308,6 @@ class SlurmGPU(Computer):
     def __str__(self):
         return "GPU cluster"
 
-    def gen_jobscript_(self, lmp_args, lmp_var):
-        """ Generate jobscript.
-
-        :param lmp_args: command line arguments
-        :type lmp_args: dict
-        :param lmp_var: LAMMPS lmp_variables defined by the command line
-        :type lmp_var: dict
-        """
-
-        with open(self.jobscript, "w") as f:
-            f.write("#!/bin/bash\n\n")
-            for key, setting in self.slurm_args.items():
-                f.write(f"#SBATCH --{key}={setting}\n#\n")
-
-            f.write("echo $CUDA_VISIBLE_DEVICES\n")
-            f.write(self.get_exec_str(self.gpu_per_node, self.lmp_exec, lmp_args, lmp_var))
-
     def __call__(self, lmp_script, lmp_var):
         self.lmp_args["-in"] = lmp_script
 
