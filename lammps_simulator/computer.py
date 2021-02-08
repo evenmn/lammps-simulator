@@ -8,7 +8,7 @@ class Computer:
 
     :param lmp_exec: LAMMPS executable
     :type lmp_exec: str
-    :param lmp_args: command line arguments
+    :param lmp_args: LAMMPS command line arguments
     :type lmp_args: dict
     """
     def __init__(self, lmp_exec="lmp", lmp_args={}):
@@ -16,7 +16,7 @@ class Computer:
                                   .format(self.__class__.__name__))
 
     def __call__(self, lmp_script, lmp_var):
-        """ Start LAMMPS simulation
+        """Start LAMMPS simulation
 
         :param lmp_script: LAMMPS script
         :type lmp_script: str
@@ -55,7 +55,7 @@ class Computer:
         :type exec_list: list
         :param jobscript: name of jobscript to be generated
         :type jobscript: str
-        :param slurm_args: slurm arguments to be used
+        :param slurm_args: slurm sbatch command line arguments to be used
         :type slurm_args: dict
         """
         with open(jobscript, "w") as f:
@@ -71,12 +71,20 @@ class Custom(Computer):
 
         mpirun -n {num_procs} {lmp_exec} {lmp_script}
 
-    :param num_procs: number of processes. Default 4
+    :param num_procs: number of processes, 1 by default
     :type num_procs: int
-    :param lmp_exec: LAMMPS executable
+    :param lmp_exec: LAMMPS executable, 'lmp' by default
     :type lmp_exec: str
-    :param lmp_args: command line arguments
+    :param lmp_args: LAMMPS command line arguments
     :type lmp_args: dict
+    :param slurm: whether or not simulation should be run from Slurm, 'False' by default
+    :type slurm: bool
+    :param slurm_args: slurm sbatch command line arguments
+    :type slurm_args: dict
+    :param generate_jobscript: whether or not jobscript should be generated, 'True' by default
+    :type generate_jobscript: bool
+    :param jobscript: filename of jobscript, 'job.sh' by default
+    :type jobscript: str
     """
     def __init__(self, num_procs=1, lmp_exec="lmp", lmp_args={},
                  slurm=False, slurm_args={}, generate_jobscript=True,
@@ -113,15 +121,17 @@ class Custom(Computer):
 
 
 class CPU(Computer):
-    """ Run simulations on desk computer. This method runs the executable
-        mpirun -n {num_procs} lmp_mpi script.in
+    """Run simulations on desk computer. This method runs the executable
+
+        mpirun -n {num_procs} {lmp_exec} {lmp_script}
+
     and requires that LAMMPS is built with mpi.
 
-    :param num_procs: number of processes. Default 4
+    :param num_procs: number of processes, 4 by default
     :type num_procs: int
-    :param lmp_exec: LAMMPS executable
+    :param lmp_exec: LAMMPS executable, 'lmp' by default
     :type lmp_exec: str
-    :param lmp_args: command line arguments
+    :param lmp_args: LAMMPS command line arguments
     :type lmp_args: dict
     """
     def __init__(self, num_procs=4, lmp_exec="lmp", lmp_args={}):
@@ -144,21 +154,20 @@ class CPU(Computer):
 
 
 class GPU(Computer):
-    """ Run simulations on gpu.
+    """Run simulations on gpu.
 
-    :param gpus_per_node: GPUs per node
+        mpirun -n {num_procs} {lmp_exec} {lmp_script}
+
+    :param gpus_per_node: GPUs per node, 1 by default
     :type gpus_per_node: int
-    :param lmp_exec: LAMMPS executable
+    :param lmp_exec: LAMMPS executable, 'lmp' by default
     :type lmp_exec: str
-    :param lmp_args: command line arguments
+    :param lmp_args: LAMMPS command line arguments
     :type lmp_args: dict
-    :param mode: GPU mode, has to be either 'kokkos' or 'gpu'
+    :param mode: GPU mode, has to be either 'kokkos' or 'gpu', 'kokkos' by default
     :type mode: str
     """
-    def __init__(self,
-                 gpu_per_node=1,
-                 lmp_exec="lmp",
-                 lmp_args={},
+    def __init__(self, gpu_per_node=1, lmp_exec="lmp", lmp_args={},
                  mode="kokkos"):
         self.gpu_per_node = gpu_per_node
         self.lmp_exec = lmp_exec
@@ -191,32 +200,33 @@ class GPU(Computer):
 
 
 class SlurmCPU(Computer):
-    """ Run LAMMPS simulations on CPU cluster with the Slurm queueing system.
+    """Run LAMMPS simulations on CPU cluster with the Slurm queueing system.
+    Generates jobscript consisting of sbatch command line arguments and
+    ends with
+
+        mpirun -n {num_procs} {lmp_exec} {lmp_script}
+
+    The generated jobscript is then executed by sbatch:
+
+        sbatch {jobscript}
 
     :param num_nodes: number of nodes
     :type num_nodes: int
-    :param lmp_exec: LAMMPS executable
+    :param lmp_exec: LAMMPS executable, 'lmp' by default
     :type lmp_exec: str
-    :param lmp_args: command line arguments
+    :param lmp_args: LAMMPS command line arguments
     :type lmp_args: dict
-    :param slurm_args: slurm settings
+    :param slurm_args: slurm sbatch command line arguments
     :type slurm_args: dict
-    :param procs_per_node: number of processes per node (number of cores)
+    :param procs_per_node: number of processes per node, 16 by default
     :type procs_per_node: int
-    :param lmp_module: name of the preferred LAMMPS module
-    :type lmp_module: str
-    :param generate_jobscript: if True, a job script is generated
+    :param generate_jobscript: whether or not jobscript should be generated, 'True' by default
     :type generate_jobscript: bool
-    :param jobscript: name of the jobscript
+    :param jobscript: filename of jobscript, 'job.sh' by default
     :type jobscript: str
     """
-    def __init__(self,
-                 num_nodes,
-                 lmp_exec="lmp",
-                 lmp_args={},
-                 slurm_args={},
-                 procs_per_node=16,
-                 generate_jobscript=True,
+    def __init__(self, num_nodes, lmp_exec="lmp", lmp_args={}, slurm_args={},
+                 procs_per_node=16, generate_jobscript=True,
                  jobscript="job.sh"):
         self.num_nodes = num_nodes
         self.num_procs = num_nodes * procs_per_node
@@ -251,30 +261,31 @@ class SlurmCPU(Computer):
 
 
 class SlurmGPU(Computer):
-    """ Run LAMMPS simulations on GPU cluster with the Slurm queueing system.
+    """Run LAMMPS simulations on GPU cluster with the Slurm queueing system.
+    Generates jobscript consisting of sbatch command line arguments and
+    ends with
+
+        mpirun -n {num_procs} {lmp_exec} {lmp_script}
+
+    The generated jobscript is then executed by sbatch:
+
+        sbatch {jobscript}
 
     :param gpu_per_node: number of GPUs
     :type gpu_per_node: int
     :param lmp_exec: LAMMPS executable
     :type lmp_exec: str
-    :param lmp_args: command line arguments
+    :param lmp_args: LAMMPS command line arguments
     :type lmp_args: dict
-    :param slurm_args: slurm settings
+    :param slurm_args: slurm sbatch command line arguments
     :type slurm_args: dict
-    :param generate_jobscript: if True, a job script is generated
+    :param generate_jobscript: whether or not jobscript should be generated, 'True' by default
     :type generate_jobscript: bool
-    :param jobscript: name of the jobscript
+    :param jobscript: filename of jobscript, 'job.sh' by default
     :type jobscript: str
-    :param mode: GPU mode, has to be either 'kokkos' or 'gpu'
-    :type mode: str
     """
-    def __init__(self,
-                 gpu_per_node=1,
-                 lmp_exec="lmp",
-                 lmp_args={},
-                 slurm_args={},
-                 generate_jobscript=True,
-                 jobscript="job.sh",
+    def __init__(self, gpu_per_node=1, lmp_exec="lmp", lmp_args={},
+                 slurm_args={}, generate_jobscript=True, jobscript="job.sh",
                  mode="kokkos"):
         self.gpu_per_node = gpu_per_node
         self.lmp_exec = lmp_exec
@@ -302,7 +313,6 @@ class SlurmGPU(Computer):
             raise NotImplementedError
 
         self.lmp_args = {**default_lmp_args, **lmp_args}    # merge
-
         self.slurm_args = {**default_slurm_args, **slurm_args}
 
     def __str__(self):
