@@ -8,7 +8,7 @@ $ pip install lammps-simulator
 ```
 
 ## Basic usage
-A simple usage example could look like this:
+Below follows a simple usage example:
 ``` python
 from lammps_simulator import Simulator
 from lammps_simulator.computer import CPU
@@ -17,10 +17,10 @@ sim = Simulator(directory="simulation")
 sim.set_input_script("script.in")
 sim.run(computer=CPU(num_procs=4, lmp_exec="lmp_mpi"))
 ```
-where the LAMMPS input script ```script.in``` is run from the directory ```simulation``` on 4 CPU processes by calling the LAMMPS executable ```lmp_mpi```.
+where the LAMMPS input script ```script.in``` is launched from the directory ```simulation``` on 4 CPU processes by calling the LAMMPS executable ```lmp_mpi```.
 
 ### Copy to working directory
-Often, the LAMMPS script reads other files, like parameter files, data files or other LAMMPS scripts. The function ```copy_to_wd``` can be used to copy any file to the working directory:
+Often, the LAMMPS script requires other files, like parameter files, data files or other LAMMPS scripts. The function ```copy_to_wd``` can be used to copy any file to the working directory:
 ``` python
 sim.copy_to_wd("parameters.vashishta")
 sim.copy_to_wd("pos.data")
@@ -32,9 +32,15 @@ sim.copy_to_wd("parameters.vashishta", "pos.data", "compute_something.in")
 ```
 
 ### Assign variables to LAMMPS script
-If your LAMMPS script takes variables, they can be specified by
+If your LAMMPS script takes command line variables, they can be specified by
 ``` python
 sim.set_input_script("script.in", var1=v1, var2=v2, ..., varN=vN)
+```
+or
+
+``` python
+lmp_vars = {'var1': v1, 'var2': v2, ... 'varN': vN}
+sim.set_input_script("script.in", **lmp_vars)
 ```
 
 For more examples, see the examples pages and the documentation.
