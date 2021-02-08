@@ -165,11 +165,11 @@ class GPU(Computer):
         self.slurm = False
 
         if mode == "kokkos":
-            default_lmp_args = {"-pk": "kokkos newton on comm no",
+            default_lmp_args = {"-pk": "kokkos newton on",
                                 "-k": f"on g {self.gpu_per_node}",
                                 "-sf": "kk"}
         elif mode == "gpu":
-            default_lmp_args = {"-pk": "gpu newton on comm no",
+            default_lmp_args = {"-pk": "gpu newton on",
                                 "-k": f"on g {self.gpu_per_node}",
                                 "-sf": "gpu"}
         else:
