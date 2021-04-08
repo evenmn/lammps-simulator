@@ -43,4 +43,9 @@ lmp_vars = {'var1': v1, 'var2': v2, ... 'varN': vN}
 sim.set_input_script("script.in", **lmp_vars)
 ```
 
+Variables might also be lists (index variables in LAMMPS terms).
+``` python
+sim.set_input_script("script.in", var=[1, 2, 3])
+```
+
 For more examples, see the examples pages and the documentation.
