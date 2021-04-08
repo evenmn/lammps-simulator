@@ -1,5 +1,5 @@
 # LAMMPS simulator
-Python package for launching simulations in LAMMPS. The code is oriented around the ```Simulator``` class, which takes a working directory as argument. The simulation is run from the working directory, and the philosophy is that all the files used are copied to this directory.
+Python package for launching LAMMPS simulations. The code is oriented around the ```Simulator``` class, which takes a working directory as argument. The simulation is run from the working directory, and the philosophy is that all the files used are copied to this directory.
 
 ## Installation
 Install package using pip:
