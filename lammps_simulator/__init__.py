@@ -7,7 +7,7 @@ class Simulator:
 
     :param directory: working directory
     :type directory: str
-    :param overwrite: if True, a directory with identical name will be overwritten. If False, a number extension is added to the directory name to avoid overwriting
+    :param overwrite: whether or not working directory should be overwritten, 'False' by default
     :type overwrite: bool
     """
 
@@ -36,7 +36,7 @@ class Simulator:
         """Copy one or several files to working directory.
 
         :param filename: filename or list of filenames to copy
-        :type filename: str or list of str
+        :type filename: str or tuple of str
         """
 
         for file in filename:
@@ -50,7 +50,7 @@ class Simulator:
         :type filename: str
         :param var: variables to be specified by the command line
         :type var: dict
-        :param copy: if True, the file is copied to the working directory
+        :param copy: whether or not input script should be copied to working directory, 'True' by default
         :type copy: bool
         """
         self.var = var
@@ -63,8 +63,10 @@ class Simulator:
     def run(self, computer=CPU(num_procs=4)):
         """Run simulation
 
-        :param computer: how to run the simulation, see computer.py for opt
+        :param computer: computer object specifying computation device
         :type computer: obj
+        :returns: job-ID
+        :rtype: int
         """
         main_path = os.getcwd()
         os.chdir(self.wd)
