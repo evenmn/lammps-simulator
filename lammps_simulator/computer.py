@@ -1,5 +1,6 @@
 import re
 import subprocess
+from numpy import ndarray
 
 
 class Computer:
@@ -50,9 +51,9 @@ class Computer:
         for key, value in lmp_args.items():
             exec_list.extend([key, str(value)])
         for key, value in lmp_var.items():
-            if type(value) in [list, tuple, np.ndarray]:
+            if type(value) in [list, tuple, ndarray]:
                 exec_list.extend(["-var", key])
-                exec_list.extend(list(value))
+                exec_list.extend(map(str, list(value)))
             else:
                 exec_list.extend(["-var", key, str(value)])
         return exec_list
