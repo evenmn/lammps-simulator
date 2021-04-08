@@ -50,7 +50,11 @@ class Computer:
         for key, value in lmp_args.items():
             exec_list.extend([key, str(value)])
         for key, value in lmp_var.items():
-            exec_list.extend(["-var", key, str(value)])
+            if type(value) in [list, tuple, np.ndarray]:
+                exec_list.extend(["-var", key])
+                exec_list.extend(list(value))
+            else:
+                exec_list.extend(["-var", key, str(value)])
         return exec_list
 
     @staticmethod
