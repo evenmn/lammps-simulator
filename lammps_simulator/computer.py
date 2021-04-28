@@ -49,8 +49,10 @@ class Computer:
         """
         exec_list = ["mpirun", "-n", str(num_procs), lmp_exec]
         for key, value in lmp_args.items():
-            exec_list.extend([key, str(value)])
+            exec_list.append(key)
+            exec_list.extend(str(value).split())
         for key, value in lmp_var.items():
+            # variable may be an LAMMPS index variable
             if type(value) in [list, tuple, ndarray]:
                 exec_list.extend(["-var", key])
                 exec_list.extend(map(str, list(value)))
