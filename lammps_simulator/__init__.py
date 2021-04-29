@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 
 
 class Simulator:
@@ -60,16 +61,21 @@ class Simulator:
         else:
             self.lmp_script = filename
 
-    def run(self, computer=CPU(num_procs=4)):
+    def run(self, computer=CPU(num_procs=4), stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE):
         """Run simulation
 
         :param computer: computer object specifying computation device
         :type computer: obj
+        :param stdout: where to write output from LAMMPS simulation. No output to terminal by default.
+        :type stdout: subprocess output object
+        :param stderr: where to write errors from LAMMPS simulation. Errors are written to terminal by default.
+        :type stderr: subprocess output object
         :returns: job-ID
         :rtype: int
         """
         main_path = os.getcwd()
         os.chdir(self.wd)
-        job_id = computer(self.lmp_script, self.var)
+        job_id = computer(self.lmp_script, self.var, stdout, stderr)
         os.chdir(main_path)
         return job_id

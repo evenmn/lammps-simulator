@@ -122,7 +122,7 @@ class Custom(Computer):
             repr += " (slurm)"
         return repr
 
-    def __call__(self, lmp_script, lmp_var):
+    def __call__(self, lmp_script, lmp_var, stdout, stderr):
         self.lmp_args["-in"] = lmp_script
 
         exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
@@ -132,7 +132,7 @@ class Custom(Computer):
             output = str(subprocess.check_output(["sbatch", self.jobscript]))
             job_id = int(re.findall("([0-9]+)", output)[0])
         else:
-            procs = subprocess.Popen(exec_list)
+            procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
             job_id = procs.pid
         print(f"Simulation started with job ID {job_id}")
         return job_id
@@ -161,11 +161,11 @@ class CPU(Computer):
     def __str__(self):
         return "CPU"
 
-    def __call__(self, lmp_script, lmp_var):
+    def __call__(self, lmp_script, lmp_var, stdout, stderr):
         self.lmp_args["-in"] = lmp_script
 
         exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
-        procs = subprocess.Popen(exec_list)
+        procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
         job_id = procs.pid
         print(f"Simulation started with job ID {job_id}")
         return job_id
@@ -207,11 +207,11 @@ class GPU(Computer):
     def __str__(self):
         return "GPU"
 
-    def __call__(self, lmp_script, lmp_var):
+    def __call__(self, lmp_script, lmp_var, stdout, stderr):
         self.lmp_args["-in"] = lmp_script
 
         exec_list = self.get_exec_list(self.gpu_per_node, self.lmp_exec, self.lmp_args, lmp_var)
-        procs = subprocess.Popen(exec_list)
+        procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
         job_id = procs.pid
         print(f"Simulation started with job ID {job_id}")
         return job_id
@@ -266,13 +266,13 @@ class SlurmCPU(Computer):
     def __str__(self):
         return "CPU (slurm)"
 
-    def __call__(self, lmp_script, lmp_var):
+    def __call__(self, lmp_script, lmp_var, stdout, stderr):
         self.lmp_args["-in"] = lmp_script
 
         if self.generate_jobscript:
             exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
             self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
-        output = str(subprocess.check_output(["sbatch", self.jobscript]))
+        output = str(subprocess.check_output(["sbatch", self.jobscript], stderr=stderr))
         job_id = int(re.findall("([0-9]+)", output)[0])
         print(f"Simulation started with job ID {job_id}")
         return job_id
@@ -336,13 +336,13 @@ class SlurmGPU(Computer):
     def __str__(self):
         return "GPU (slurm)"
 
-    def __call__(self, lmp_script, lmp_var):
+    def __call__(self, lmp_script, lmp_var, stdout, stderr):
         self.lmp_args["-in"] = lmp_script
 
         if self.generate_jobscript:
             exec_list = self.get_exec_list(self.gpu_per_node, self.lmp_exec, self.lmp_args, lmp_var)
             self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
-        output = str(subprocess.check_output(["sbatch", self.jobscript]))
+        output = str(subprocess.check_output(["sbatch", self.jobscript], stderr=stderr))
         job_id = int(re.findall("([0-9]+)", output)[0])
         print(f"Simulation started with job ID {job_id}")
         return job_id
