@@ -1,14 +1,18 @@
 # LAMMPS simulator
-Python package for launching LAMMPS simulations. The code is oriented around the ```Simulator``` class, which takes a working directory as argument. The simulation is run from the working directory, and the philosophy is that all the files used are copied to this directory.
+A light-weight Python package for launching LAMMPS simulations. Given a LAMMPS input script, the simulation is launched from a specified working directory. The default behavior is to copy the input script and all dependencies to the working directory, making it easy to reproduce simulations.
 
 ## Installation
 Install package using pip:
 ``` bash
-$ pip install lammps-simulator
+$ pip install git+https://github.com/evenmn/lammps-simulator
 ```
 
+## Prerequisites
+1. Python 3.3+ (subprocess.DEVNULL from 3.3 needed)
+2. (https://lammps.sandia.gov/)[LAMMPS] (Assuming that all versions after 2014 should work, but just a few were tested)
+
 ## Basic usage
-Below follows a simple usage example:
+The code is oriented around the `Simulator` class, which takes the working directory as argument. Below follows a simple usage example:
 ``` python
 from lammps_simulator import Simulator
 from lammps_simulator.computer import CPU
