@@ -9,7 +9,7 @@ $ pip install git+https://github.com/evenmn/lammps-simulator
 
 ## Prerequisites
 1. Python 3.3+ (subprocess.DEVNULL from 3.3 needed)
-2. (https://lammps.sandia.gov/)[LAMMPS] (Assuming that all versions after 2014 should work, but just a few were tested)
+2. [LAMMPS](https://lammps.sandia.gov/) (Assuming that all versions after 2014 should work, but just a few were tested)
 
 ## Basic usage
 The code is oriented around the `Simulator` class, which takes the working directory as argument. Below follows a simple usage example:
