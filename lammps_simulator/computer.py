@@ -1,5 +1,6 @@
 import re
 import subprocess
+from numpy import ndarray
 
 
 class Computer:
