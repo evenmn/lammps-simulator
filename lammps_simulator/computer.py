@@ -4,8 +4,8 @@ from numpy import ndarray
 
 
 class Computer:
-    """This is the parent computer class, which controls how
-    to run LAMMPS. The required methods are __init__ and __call__
+    """Computer base class, which controls how to run LAMMPS.
+    The required methods are __init__ and __call__.
 
     :param lmp_exec: LAMMPS executable
     :type lmp_exec: str
