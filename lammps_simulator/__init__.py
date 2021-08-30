@@ -1,6 +1,21 @@
 import os
+import sys
+import signal
 import shutil
+#import psutil
 import subprocess
+
+
+def kill_lammps(pid):
+    def signal_handler(sig, frame):    
+        #p = psutil.Process(pid)
+        #p.terminate()
+        os.kill(pid, signal.SIGTERM)
+        raise KeyboardInterrupt
+    
+    signal.signal(signal.SIGINT, signal_handler)
+
+    
 
 
 class Simulator:
@@ -77,6 +92,8 @@ class Simulator:
         main_path = os.getcwd()
         os.chdir(self.wd)
         job_id = computer(self.lmp_script, self.var, stdout, stderr)
+        if computer.slurm == False:
+            kill_lammps(job_id)
         os.chdir(main_path)
         return job_id
 
@@ -95,5 +112,7 @@ class Simulator:
         main_path = os.getcwd()
         os.chdir(self.wd)
         job_id = computer(self.lmp_script, self.var, stdout, stderr)
+        if computer.slurm == False:
+            kill_lammps(job_id)
         os.chdir(main_path)
         return job_id
