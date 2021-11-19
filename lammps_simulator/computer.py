@@ -80,7 +80,10 @@ class Computer:
         with open(jobscript, "w") as f:
             f.write("#!/bin/bash\n\n")
             for key, setting in slurm_args.items():
-                f.write(f"#SBATCH --{key}={setting}\n#\n")
+                if setting is None:
+                    f.write(f"#SBATCH --{key}\n#\n")
+                else:
+                    f.write(f"#SBATCH --{key}={setting}\n#\n")
             f.write("\n")
             f.write(" ".join(exec_list))
 
