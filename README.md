@@ -2,7 +2,7 @@
 A light-weight Python package for launching LAMMPS simulations. Given a LAMMPS input script, the simulation is launched from a specified working directory. The default behavior is to copy the input script and all dependencies to the working directory, making it easy to redo the simulations.
 
 ## Installation
-Install package using pip:
+Install package from source using pip:
 ``` bash
 $ pip install git+https://github.com/evenmn/lammps-simulator
 ```
