@@ -12,26 +12,30 @@ class Simulator:
     :type overwrite: bool
     """
 
-    from .computer import CPU, Custom
+    from .computer import Custom
 
-    def __init__(self, directory="./", overwrite=False):
-        self.wd = directory
-        if overwrite:
-            try:
-                os.makedirs(directory)
-            except FileExistsError:
-                pass
+    def __init__(self, directory=None, overwrite=False):
+        if directory is None:
+            self.wd = ""
         else:
-            ext = 0
-            repeat = True
-            while repeat:
+            self.wd = directory
+            if overwrite:
                 try:
-                    os.makedirs(self.wd)
-                    repeat = False
+                    os.makedirs(directory)
                 except FileExistsError:
-                    ext += 1
-                    self.wd = directory + f"_{ext}"
-        self.wd += "/"
+                    pass
+            else:
+                ext = 0
+                repeat = True
+                while repeat:
+                    try:
+                        os.makedirs(self.wd)
+                        repeat = False
+                    except FileExistsError:
+                        ext += 1
+                        self.wd = directory + f"_{ext}"
+            self.wd += "/"
+
 
     def copy_to_wd(self, *filename):
         """Copy one or several files to working directory.
@@ -39,10 +43,10 @@ class Simulator:
         :param filename: filename or list of filenames to copy
         :type filename: str or tuple of str
         """
-
         for file in filename:
             head, tail = os.path.split(file)
             shutil.copyfile(file, self.wd + tail)
+
 
     def set_input_script(self, filename, copy=True, **var):
         """Set LAMMPS script
@@ -61,8 +65,9 @@ class Simulator:
         else:
             self.lmp_script = filename
 
-    def run(self, computer=CPU(num_procs=4), stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE):
+
+    def run(self, computer=None, stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE, **kwargs):
         """Run simulation
 
         :param computer: computer object specifying computation device
@@ -71,14 +76,19 @@ class Simulator:
         :type stdout: subprocess output object
         :param stderr: where to write errors from LAMMPS simulation. Errors are written to terminal by default.
         :type stderr: subprocess output object
+        :param kwargs: arguments to be passed to Custom computer. Will only be used if computer=None.
+        :type kwargs: unpacked dictionary
         :returns: job-ID
         :rtype: int
         """
+        if computer is None:
+            computer = self.Custom(**kwargs)
         main_path = os.getcwd()
         os.chdir(self.wd)
         job_id = computer(self.lmp_script, self.var, stdout, stderr)
         os.chdir(main_path)
         return job_id
+
 
     def run_custom(self, stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE, **kwargs):
@@ -88,6 +98,8 @@ class Simulator:
         :type stdout: subprocess output object
         :param stderr: where to write errors from LAMMPS simulation. Errors are written to terminal by default.
         :type stderr: subprocess output object
+        :param kwargs: arguments to be passed to Custom computer
+        :type kwargs: unpacked dictionary
         :returns: job-ID
         :rtype: int
         """
