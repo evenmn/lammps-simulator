@@ -12,7 +12,7 @@ $ pip install git+https://github.com/evenmn/lammps-simulator
 2. [LAMMPS](https://lammps.sandia.gov/) (Any recent version)
 
 ## Basic usage
-To run a LAMMPS script from the current directory, the script has to be specified and the way of running the simulation has to be defined. The easiest way of doing this is to use the default simulation object, `local_sim`:
+To run a LAMMPS script from the current directory, the script has to be specified and the way of running the simulation has to be defined. The easiest way of doing this is to use the default simulation object, `sim`:
 ``` python
 from lammps_simulator import sim
 
