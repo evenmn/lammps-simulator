@@ -15,7 +15,7 @@ $ pip install git+https://github.com/evenmn/lammps-simulator
 ## Basic usage
 To run a LAMMPS script from the current directory, the script has to be specified and the way of running the simulation has to be defined. The easiest way of doing this is to use the default simulation object, `local_sim`:
 ``` python
-import lammps_simulator.local_sim as sim
+from lammps_simulator import sim
 
 sim.set_input_script("script.in")
 sim.run(num_procs=4, lmp_exec="lmp")
@@ -57,7 +57,7 @@ lmp_vars = {'var1': v1, 'var2': v2, ... 'varN': vN}
 sim.set_input_script("script.in", **lmp_vars)
 ```
 
-Variables might also be lists (index variables in LAMMPS terms).
+Variables might also be lists (index variables in LAMMPS terms):
 ``` python
 sim.set_input_script("script.in", var=[1, 2, 3])
 ```
