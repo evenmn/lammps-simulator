@@ -12,18 +12,27 @@ $ pip install git+https://github.com/evenmn/lammps-simulator
 2. [LAMMPS](https://lammps.sandia.gov/) (Any recent version)
 
 ## Basic usage
-The code is oriented around the `Simulator` class, which takes the working directory as argument. Below follows a simple usage example:
+To run a LAMMPS script from the current directory, the script has to be specified and the way of running the simulation has to be defined. The easiest way of doing this is to use the default simulation object, `sim`:
+``` python
+from lammps_simulator import sim
+
+sim.set_input_script("script.in")
+sim.run(num_procs=4, lmp_exec="lmp")
+```
+where the LAMMPS input script ```script.in``` is launched on 4 CPU processes by calling the LAMMPS executable ```lmp```. This corresponds to running
+``` bash
+mpirun -n 4 lmp -in script.in
+```
+
+### Defining working directory and copy files to it
+Associating each simulation with a respective working directory is good practice, as it makes it easy to rerun the simulation. Create a simulator object associated with a directory by:
 ``` python
 from lammps_simulator import Simulator
-from lammps_simulator.computer import CPU
 
-sim = Simulator(directory="simulation")
-sim.set_input_script("script.in")
-sim.run(computer=CPU(num_procs=4, lmp_exec="lmp_mpi"))
+sim = Simulator("simulation", overwrite=False)
 ```
-where the LAMMPS input script ```script.in``` is launched from the directory ```simulation``` on 4 CPU processes by calling the LAMMPS executable ```lmp_mpi```.
+The argument `overwrite` can be set to True if the contents of the simulation should overwrite a potentially existing simulation directory. 
 
-### Copy to working directory
 Often, the LAMMPS script requires other files, like parameter files, data files or other LAMMPS scripts. The function ```copy_to_wd``` can be used to copy any file to the working directory:
 ``` python
 sim.copy_to_wd("parameters.vashishta")
@@ -47,7 +56,7 @@ lmp_vars = {'var1': v1, 'var2': v2, ... 'varN': vN}
 sim.set_input_script("script.in", **lmp_vars)
 ```
 
-Variables might also be lists (index variables in LAMMPS terms).
+Variables might also be lists (index variables in LAMMPS terms):
 ``` python
 sim.set_input_script("script.in", var=[1, 2, 3])
 ```

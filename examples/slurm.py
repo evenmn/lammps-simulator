@@ -1,28 +1,27 @@
+"""
+Example on how to submit a CPU job to a cluster using Slurm.
+There is also an alternative script that is commented out
+which does the same, but where a device is manually defined.
+
+date: March 30th, 2022
+"""
+
 from lammps_simulator import Simulator
-from lammps_simulator.computer import SlurmGPU
 
-slurm_args = {"job-name": "GPU-job",
-              "partition": "normal",
-              "ntasks": 1,
-              "cpus-per-task": "2",
-              "gres": "gpu:1",
-              "output": "slurm.out",
-              }
-
-lmp_args = {"-pk": "kokkos newton on comm no",
-            "-k": "on g 1",
-            "-sf": "kk"}
-
-computer = SlurmGPU(lmp_exec="lmp_kokkos_cuda_mpi",
-                    slurm_args=slurm_args,
-                    lmp_args=lmp_args,
-                    jobscript="job.sh")
-
-var = {"run_time": 3000,
-       "temp": 300,
-       "pressure": 1}
+slurm_args = {'job-name': 'CPU-job',
+              'ntasks': 16,
+              'nodes': 1}
 
 sim = Simulator(directory="simulation")
-sim.copy_to_wd("init_config.data")
-sim.set_input_script("script.in", **var)
-sim.run(computer=computer)
+sim.set_input_script("script.in", temp=300)
+sim.run(num_procs=16, slurm=True, slurm_args=slurm_args)
+
+"""
+from lammps_simulator import Simulator
+from lammps_simulator.device import SlurmCPU
+
+device = SlurmCPU(num_procs=16)
+sim = Simulator(directory="simulation")
+sim.set_input_script("in.lammps", temp=300)
+sim.run(device=device)
+"""
