@@ -1,2 +1,2 @@
 from .simulator import Simulator
-sim = Simulator()
+local_sim = Simulator()

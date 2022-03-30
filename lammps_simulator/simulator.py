@@ -1,5 +1,6 @@
 import os
 import shutil
+import warnings
 import subprocess
 
 
@@ -16,7 +17,7 @@ class Simulator:
 
     def __init__(self, directory=None, overwrite=False):
         if directory is None:
-            self.wd = ""
+            self.wd = None
         else:
             self.wd = directory
             if overwrite:
@@ -43,9 +44,12 @@ class Simulator:
         :param filename: filename or list of filenames to copy
         :type filename: str or tuple of str
         """
-        for file in filename:
-            head, tail = os.path.split(file)
-            shutil.copyfile(file, self.wd + tail)
+        if self.wd is None:
+            warnings.warn("Working directory is not defined!")
+        else:
+            for file in filename:
+                head, tail = os.path.split(file)
+                shutil.copyfile(file, self.wd + tail)
 
 
     def set_input_script(self, filename, copy=True, **var):
@@ -59,7 +63,7 @@ class Simulator:
         :type copy: bool
         """
         self.var = var
-        if copy:
+        if copy and self.wd is not None:
             head, self.lmp_script = os.path.split(filename)
             shutil.copyfile(filename, self.wd + self.lmp_script)
         else:
@@ -84,7 +88,8 @@ class Simulator:
         if computer is None:
             computer = self.Custom(**kwargs)
         main_path = os.getcwd()
-        os.chdir(self.wd)
+        if self.wd is not None:
+            os.chdir(self.wd)
         job_id = computer(self.lmp_script, self.var, stdout, stderr)
         os.chdir(main_path)
         return job_id
@@ -105,7 +110,8 @@ class Simulator:
         """
         computer = self.Custom(**kwargs)
         main_path = os.getcwd()
-        os.chdir(self.wd)
+        if self.wd is not None:
+            os.chdir(self.wd)
         job_id = computer(self.lmp_script, self.var, stdout, stderr)
         os.chdir(main_path)
         return job_id

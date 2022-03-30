@@ -13,27 +13,29 @@ $ pip install git+https://github.com/evenmn/lammps-simulator
 2. [LAMMPS](https://lammps.sandia.gov/) (Any recent version)
 
 ## Basic usage
-To run a LAMMPS script from the current directory, you have to define the script and how to run it:
+To run a LAMMPS script from the current directory, the script has to be specified and the way of running the simulation has to be defined. The easiest way of doing this is to use the default simulation object, `local_sim`:
 ``` python
-from lammps_simulator import sim
+import lammps_simulator.local_sim as sim
 
 sim.set_input_script("script.in")
 sim.run(num_procs=4, lmp_exec="lmp")
 ```
-where the LAMMPS input script ```script.in``` is launched on 4 CPU processes by calling the LAMMPS executable ```lmp```.
+where the LAMMPS input script ```script.in``` is launched on 4 CPU processes by calling the LAMMPS executable ```lmp```. This corresponds to running
+``` bash
+mpirun -n 4 lmp -in script.in
+```
 
 ### Defining working directory and copy files to it
-Associating each simulation with a respective working directory is a good practice, where everything needed to rerun the simulation is stored. Create a simulator object associated with a directory by:
+Associating each simulation with a respective working directory is good practice, as it makes it easy to rerun the simulation. Create a simulator object associated with a directory by:
 ``` python
 from lammps_simulator import Simulator
 
 sim = Simulator("simulation", overwrite=False)
 ```
-The argument `overwrite` can be set to true if the contents of the simulation should overwrite a potentially existing simulation directory. 
+The argument `overwrite` can be set to True if the contents of the simulation should overwrite a potentially existing simulation directory. 
 
 Often, the LAMMPS script requires other files, like parameter files, data files or other LAMMPS scripts. The function ```copy_to_wd``` can be used to copy any file to the working directory:
 ``` python
-sim = Simulator("working_directory")
 sim.copy_to_wd("parameters.vashishta")
 sim.copy_to_wd("pos.data")
 sim.copy_to_wd("compute_something.in")
