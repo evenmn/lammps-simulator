@@ -13,7 +13,7 @@ slurm_args = {'job-name': 'CPU-job',
               'nodes': 1}
 
 sim = Simulator(directory="simulation")
-sim.set_input_script("in.lammps", temp=300)
+sim.set_input_script("script.in", temp=300)
 sim.run(num_procs=16, slurm=True, slurm_args=slurm_args)
 
 """

@@ -20,5 +20,5 @@ slurm_args = {'job-name': 'arrayjob',
 device = SlurmCPU(1, lmp_exec="lmp", slurm_args=slurm_args)
 
 sim = Simulator(directory="simulation")
-sim.set_input_script("in.lammps", temp="${SLURM_ARRAY_TASK_ID}")
+sim.set_input_script("script.in", temp="${SLURM_ARRAY_TASK_ID}")
 sim.run(device=device)
