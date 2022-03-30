@@ -8,7 +8,7 @@ date: March 30th, 2022
 from lammps_simulator import Simulator
 from lammps_simulator.device import GPU
 
-device = GPU(lmp_exec="lmp", gpus_per_node=1)
+device = GPU(lmp_exec="lmp", gpu_per_node=1)
 
 var = {"run_time": 3000,
        "temp": 300,
