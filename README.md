@@ -4,7 +4,7 @@ A light-weight Python package for launching LAMMPS simulations. Given a LAMMPS i
 ## Installation
 Install package from source using pip:
 ``` bash
-$ pip install git+https://github.com/evenmn/lammps-simulator
+$ pip install lammps-simulator
 ```
 
 ## Prerequisites
@@ -21,7 +21,7 @@ sim.run(num_procs=4, lmp_exec="lmp")
 ```
 where the LAMMPS input script ```script.in``` is launched on 4 CPU processes by calling the LAMMPS executable ```lmp```. This corresponds to running
 ``` bash
-mpirun -n 4 lmp -in script.in
+$ mpirun -n 4 lmp -in script.in
 ```
 
 ### Defining working directory and copy files to it
