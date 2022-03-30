@@ -70,7 +70,7 @@ class Simulator:
             self.lmp_script = filename
 
 
-    def run(self, computer=None, stdout=subprocess.DEVNULL,
+    def run(self, computer=None, device=None, stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE, **kwargs):
         """Run simulation
 
@@ -85,12 +85,15 @@ class Simulator:
         :returns: job-ID
         :rtype: int
         """
-        if computer is None:
-            computer = self.Custom(**kwargs)
+        if computer is None and device is None:
+            device = self.Custom(**kwargs)
+        elif device is None:
+            warnings.warn("'Computer' is deprecated from version 1.1.0 and is replaced by the more intuitive 'Device'", DeprecationWarning)
+            device = computer
         main_path = os.getcwd()
         if self.wd is not None:
             os.chdir(self.wd)
-        job_id = computer(self.lmp_script, self.var, stdout, stderr)
+        job_id = device(self.lmp_script, self.var, stdout, stderr)
         os.chdir(main_path)
         return job_id
 
@@ -108,6 +111,7 @@ class Simulator:
         :returns: job-ID
         :rtype: int
         """
+        warnings.warn("'run_custom' is deprecated from version 1.1.0, use 'run' instead", DeprecationWarning)
         computer = self.Custom(**kwargs)
         main_path = os.getcwd()
         if self.wd is not None:
