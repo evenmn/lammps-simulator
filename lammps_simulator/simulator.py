@@ -9,13 +9,29 @@ class Simulator:
 
     :param directory: working directory
     :type directory: str
+    :param script: LAMMPS input script
+    :type script: str
     :param overwrite: whether or not working directory should be overwritten, 'False' by default
     :type overwrite: bool
+    :param copy: whether or not input script should be copied to working directory, 'True' by default
+    :type copy: bool
     """
 
     from .computer import Custom
 
-    def __init__(self, directory=None, overwrite=False):
+    def __init__(self, directory=None, script=None, overwrite=False, copy=True):
+        self.set_wd(directory, overwrite)
+        self.set_input_script(script, copy)
+
+    
+    def set_wd(self, directory, overwrite=False):
+        """Set working directory
+
+        :param directory: working directory
+        :type directory: str
+        :param overwrite: whether or not working directory should be overwritten, 'False' by default
+        :type overwrite: bool
+        """
         if directory is None:
             self.wd = None
         else:
@@ -35,7 +51,7 @@ class Simulator:
                     except FileExistsError:
                         ext += 1
                         self.wd = directory + f"_{ext}"
-            self.wd += "/"
+            self.wd += "/" 
 
 
     def copy_to_wd(self, *filename):
@@ -58,7 +74,7 @@ class Simulator:
         :param filename: LAMMPS input script
         :type filename: str
         :param var: variables to be specified by the command line
-        :type var: dict
+        :type var: unpacked dict
         :param copy: whether or not input script should be copied to working directory, 'True' by default
         :type copy: bool
         """
@@ -68,6 +84,15 @@ class Simulator:
             shutil.copyfile(filename, self.wd + self.lmp_script)
         else:
             self.lmp_script = filename
+
+
+    def set_var(**var):
+        """Set LAMMPS variables
+
+        :param var: variables to be specified by the command line
+        :type var: unpacked dict
+        """
+        self.var = var
 
 
     def run(self, computer=None, device=None, stdout=subprocess.DEVNULL,

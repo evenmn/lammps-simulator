@@ -12,11 +12,11 @@ $ pip install lammps-simulator
 2. [LAMMPS](https://lammps.sandia.gov/) (Any recent version)
 
 ## Basic usage
-To run a LAMMPS script from the current directory, the script has to be specified and the way of running the simulation has to be defined. The easiest way of doing this is to use the default simulation object, `sim`:
+To run a LAMMPS script from the current directory, the script has to be specified and the way of running the simulation has to be defined. Create a simulator object and pass the LAMMPS input script to it:
 ``` python
-from lammps_simulator import sim
+from lammps_simulator import Simulator
 
-sim.set_input_script("script.in")
+sim = Simulator(script="script.in")
 sim.run(num_procs=4, lmp_exec="lmp")
 ```
 where the LAMMPS input script ```script.in``` is launched on 4 CPU processes by calling the LAMMPS executable ```lmp```. This corresponds to running
@@ -27,9 +27,7 @@ $ mpirun -n 4 lmp -in script.in
 ### Defining working directory and copy files to it
 Associating each simulation with a respective working directory is good practice, as it makes it easy to rerun the simulation. Create a simulator object associated with a directory by:
 ``` python
-from lammps_simulator import Simulator
-
-sim = Simulator("simulation", overwrite=False)
+sim.set_wd("simulation", overwrite=False)
 ```
 The argument `overwrite` can be set to True if the contents of the simulation should overwrite a potentially existing simulation directory. 
 
@@ -47,18 +45,18 @@ sim.copy_to_wd("parameters.vashishta", "pos.data", "compute_something.in")
 ### Assign variables to LAMMPS script
 If your LAMMPS script takes command line variables, they can be specified by
 ``` python
-sim.set_input_script("script.in", var1=v1, var2=v2, ..., varN=vN)
+sim.set_var(var1=v1, var2=v2, ..., varN=vN)
 ```
 or
 
 ``` python
 lmp_vars = {'var1': v1, 'var2': v2, ... 'varN': vN}
-sim.set_input_script("script.in", **lmp_vars)
+sim.set_var(**lmp_vars)
 ```
 
 Variables might also be lists (index variables in LAMMPS terms):
 ``` python
-sim.set_input_script("script.in", var=[1, 2, 3])
+sim.set_var(var=[1, 2, 3])
 ```
 
 For more examples, see the examples pages and the documentation.
