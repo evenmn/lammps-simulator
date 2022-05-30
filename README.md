@@ -1,5 +1,5 @@
 # LAMMPS simulator
-A light-weight Python package for launching LAMMPS simulations. Given a LAMMPS input script, the simulation is launched from a specified working directory. The default behavior is to copy the input script and all dependencies to the working directory, making it easy to redo the simulations.
+A light-weight Python package for launching LAMMPS simulations. Given a LAMMPS input script, the simulation is launched from a specified working directory. The default behavior is to copy the input script and all dependencies to the working directory, making it easy to redo the simulations. Simulations can be submitted directly to the Slurm simulation queue.
 
 ## Installation
 Install package from source using pip:
@@ -59,6 +59,17 @@ sim.set_input_script("script.in", **lmp_vars)
 Variables might also be lists (index variables in LAMMPS terms):
 ``` python
 sim.set_input_script("script.in", var=[1, 2, 3])
+```
+
+### Slurm support
+Simulations can be submitted to the Slurm queue by adding `slurm=True` and Slurm arguments to the `run`-method. Basic example:
+``` python
+slurm_args = {'job-name'='cpu', 'partition'='normal', 'ntasks'=16, 'nodes'=1}
+sim.run(num_procs=16, lmp_exec="lmp", slurm=True, slurm_args=slurm_args)
+```
+A job script, `job.sh`, will then be generated in the simulation directory, which is executed with
+```
+sbatch job.sh
 ```
 
 For more examples, see the examples pages and the documentation.
