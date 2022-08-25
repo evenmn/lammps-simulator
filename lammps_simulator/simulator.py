@@ -52,6 +52,20 @@ class Simulator:
                 shutil.copyfile(file, self.wd + tail)
 
 
+    def create_subdir(self, *dirname):
+        """Create a subdirectory inside the working directory,
+        for example to store output data in.
+
+        :param dirname: name of subdirectory to create
+        :type filename: str or tuple of str
+        """
+
+        if self.wd is None:
+            warnings.warn("Working directory is not defined!")
+        else:
+            for dir in dirname:
+                os.makedirs(self.wd + dir)
+
     def set_input_script(self, filename, copy=True, **var):
         """Set LAMMPS script
 
