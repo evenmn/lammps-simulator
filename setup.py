@@ -14,5 +14,6 @@ setup(name='lammps-simulator',
       author_email='evenmn@mn.uio.no',
       license='MIT',
       packages=['lammps_simulator'],
+      install_requires=['numpy'],
       include_package_data=True,
       zip_safe=False)
