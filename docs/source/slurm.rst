@@ -80,7 +80,6 @@ Similarly, :code:`SlurmGPU` takes the additional arguments :code:`gpu_per_node` 
                            "-sf": "kk"}
    elif mode == "gpu":
        default_lmp_args = {"-pk": "gpu newton on neigh full",
-                           "-k": f"on g {self.gpu_per_node}",
                            "-sf": "gpu"}
 
 More about LAMMPS arguments on the next page.
