@@ -1,11 +1,11 @@
 from setuptools import setup
-import lammps_simulator
+#import lammps_simulator
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(name='lammps-simulator',
-      version=lammps_simulator.__version__,
+      version=1.2.1, #lammps_simulator.__version__,
       description='Python interface for running LAMMPS input scripts',
       long_description=long_description,
       long_description_content_type="text/markdown",
