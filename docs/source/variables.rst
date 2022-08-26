@@ -7,7 +7,7 @@ LAMMPS variables can easily be assigned to the input scripts as :code:`set_input
 
    sim.set_input_script("script.in", var1=v1, var2=v2, ..., varN=vN)
 
-Or one can store the variables in a dictionary and unpack it can calling the function:
+Or one can store the variables in a dictionary and unpack it when calling the function:
 
 .. code-block:: python
 
