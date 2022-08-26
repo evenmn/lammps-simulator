@@ -72,4 +72,4 @@ A job script, `job.sh`, will then be generated in the simulation directory, whic
 sbatch job.sh
 ```
 
-For more examples, see the examples pages and the documentation.
+For more examples, see the examples pages and the [documentation](https://evenmn.github.io/lammps-simulator/).
