@@ -1,3 +1,3 @@
-__version__ = "1.2.0"
+__version__ = "1.2.2"
 from .simulator import Simulator
 sim = Simulator()
