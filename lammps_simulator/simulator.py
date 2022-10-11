@@ -26,42 +26,15 @@ class Simulator:
                 self.wd = directory
             if overwrite:
                 self._make_dir(self.wd, self.ssh)
-                """
-                try:
-                    if self.ssh is None:
-                        os.makedirs(directory)
-                    else:
-                        res = subprocess.Popen(['ssh', self.ssh, 'mkdir', self.wd], stdout=subprocess.PIPE, stderr=subprocess.PIPE);
-                        output, error = res.communicate()
-                        if "File exists" in str(error): 
-                            raise FileExistsError
-                except FileExistsError:
-                    pass
-                """
             else:
                 ext = 0
                 repeat = True
                 original_dir = self.wd
                 while repeat:
-                    print(self.wd)
                     repeat = self._make_dir(self.wd, self.ssh)
                     if repeat:
                         ext += 1
                         self.wd = original_dir + f"_{ext}"
-                    """
-                    try:
-                        if ssh is None: 
-                            os.makedirs(self.wd)
-                        else:
-                            res = subprocess.Popen(['ssh', self.ssh, 'mkdir', self.wd], stdout=subprocess.PIPE, stderr=subprocess.PIPE);
-                            output, error = res.communicate()
-                            if "File exists" in str(error): 
-                                raise FileExistsError
-                        repeat = False
-                    except FileExistsError:
-                        ext += 1
-                        self.wd = directory + f"_{ext}"
-                    """
             self.wd += "/"
 
     @staticmethod
@@ -117,20 +90,8 @@ class Simulator:
         if self.wd is None:
             warnings.warn("Working directory is not defined!")
         else:
-            for dir in dirname:
-                self._make_dir(self.wd + dir, self.ssh)
-                """
-                try:
-                    if self.ssh is None:
-                            os.makedirs(self.wd + dir)
-                    else:
-                        res = subprocess.Popen(['ssh', self.ssh, 'mkdir', self.wd + dir], stdout=subprocess.PIPE, stderr=subprocess.PIPE);
-                        output, error = res.communicate()
-                        if "File exists" in str(error): 
-                            raise FileExistsError
-                except FileExistsError:
-                    pass
-                """
+            for dir_ in dirname:
+                self._make_dir(self.wd + dir_, self.ssh)
                         
 
     def set_input_script(self, filename, copy=True, **var):
@@ -149,7 +110,6 @@ class Simulator:
             if self.ssh is None:
                 shutil.copyfile(filename, self.wd + self.lmp_script)
             else:
-                print(self.ssh, self.wd, self.lmp_script)
                 subprocess.run(['rsync', '-av', filename, self.ssh + ':' + self.wd + self.lmp_script]) 
                 
         else:
