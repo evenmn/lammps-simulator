@@ -156,7 +156,7 @@ class Custom(Device):
                     return job_id
 
         else:
-            if self.ssh_dir is None:            
+            if self.ssh_dir is None: 
                 procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
                 pid = procs.pid
                 print(f"Simulation started with process ID {pid}")
