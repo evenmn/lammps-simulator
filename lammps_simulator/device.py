@@ -110,7 +110,7 @@ class Custom(Device):
     """
     def __init__(self, num_procs=1, lmp_exec="lmp", lmp_args={},
                  slurm=False, slurm_args={}, generate_jobscript=True,
-                 jobscript="job.sh"):
+                 jobscript="job.sh", ssh_dir = None):
         self.num_procs = num_procs
         self.lmp_exec = lmp_exec
         self.lmp_args = lmp_args
@@ -118,6 +118,10 @@ class Custom(Device):
         self.slurm_args = slurm_args
         self.generate_jobscript = generate_jobscript
         self.jobscript = jobscript
+        self.ssh_dir = ssh_dir
+
+        if self.ssh_dir is not None:
+            self.sendlabel = f"SEND_TO_SSH_"
 
     def __str__(self):
         repr = "Custom"
@@ -131,11 +135,24 @@ class Custom(Device):
         exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
         if self.slurm:
             if self.generate_jobscript:
-                self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
-            output = str(subprocess.check_output(["sbatch", self.jobscript]))
-            job_id = int(re.findall("([0-9]+)", output)[0])
-            print(f"Job submitted with job ID {job_id}")
-            return job_id
+                if self.ssh_dir is None:
+                    self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
+                    output = str(subprocess.check_output(["sbatch", self.jobscript]))
+                    job_id = int(re.findall("([0-9]+)", output)[0])
+                    print(f"Job submitted with job ID {job_id}")
+                    return job_id
+                else:
+                    self.gen_jobscript(exec_list, self.sendlabel + self.jobscript, self.slurm_args)
+                    subprocess.run(['rsync', '-av', '--remove-source-files', self.sendlabel + self.jobscript, self.ssh_dir + self.jobscript]) 
+                    ssh, wd = self.ssh_dir.split(':')
+                    #### Working here
+                    subprocess.check_output(['ssh', ssh, '"cd', {wd}, '&&', 'ls"'])
+                    exit()
+                    job_id = subprocess.check_output(['ssh', ssh, '"cd', wd, '&&', 'sbatch', f'{self.jobscript}"'])
+                    print(job_id)
+                    output = str(subprocess.check_output(["sbatch", self.jobscript]))
+                    job_id = int(re.findall("([0-9]+)", output)[0])
+                    print(f"Job submitted with job ID {job_id}")
         else:
             procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
             pid = procs.pid
