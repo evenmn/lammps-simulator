@@ -13,16 +13,27 @@ class Simulator:
     :type overwrite: bool
     """
 
-    from .computer import Custom
+    # from .computer import Custom
+    from .device import Custom # Shouldn't we use this when Computer is deprecated 
 
     def __init__(self, directory=None, overwrite=False):
         if directory is None:
             self.wd = None
         else:
-            self.wd = directory
+            if (":" in directory):
+                self.ssh, self.wd = directory.split(":")
+            else:
+                self.ssh = None
+                self.wd = directory
             if overwrite:
                 try:
-                    os.makedirs(directory)
+                    if self.ssh is None:
+                        os.makedirs(directory)
+                    else:
+                        res = subprocess.Popen(['ssh', self.ssh, 'mkdir', self.wd], stdout=subprocess.PIPE, stderr=subprocess.PIPE);
+                        output, error = res.communicate()
+                        if "File exists" in str(error): 
+                            raise FileExistsError
                 except FileExistsError:
                     pass
             else:
@@ -30,7 +41,13 @@ class Simulator:
                 repeat = True
                 while repeat:
                     try:
-                        os.makedirs(self.wd)
+                        if ssh is None: 
+                            os.makedirs(self.wd)
+                        else:
+                            res = subprocess.Popen(['ssh', self.ssh, 'mkdir', self.wd], stdout=subprocess.PIPE, stderr=subprocess.PIPE);
+                            output, error = res.communicate()
+                            if "File exists" in str(error): 
+                                raise FileExistsError
                         repeat = False
                     except FileExistsError:
                         ext += 1
@@ -49,8 +66,12 @@ class Simulator:
         else:
             for file in filename:
                 head, tail = os.path.split(file)
-                shutil.copyfile(file, self.wd + tail)
-
+                if self.ssh is None:
+                    shutil.copyfile(file, self.wd + tail)
+                else:
+                    # use subprocess.run for transfer to finsih before moving on
+                    subprocess.run(['rsync', '-av', file, self.ssh + ':' + self.wd + tail]) 
+                    
 
     def create_subdir(self, *dirname):
         """Create a subdirectory inside the working directory,
@@ -64,7 +85,17 @@ class Simulator:
             warnings.warn("Working directory is not defined!")
         else:
             for dir in dirname:
-                os.makedirs(self.wd + dir)
+                try:
+                    if self.ssh is None:
+                            os.makedirs(self.wd + dir)
+                    else:
+                        res = subprocess.Popen(['ssh', self.ssh, 'mkdir', self.wd + dir], stdout=subprocess.PIPE, stderr=subprocess.PIPE);
+                        output, error = res.communicate()
+                        if "File exists" in str(error): 
+                            raise FileExistsError
+                except FileExistsError:
+                    pass
+                        
 
     def set_input_script(self, filename, copy=True, **var):
         """Set LAMMPS script
@@ -79,7 +110,11 @@ class Simulator:
         self.var = var
         if copy and self.wd is not None:
             head, self.lmp_script = os.path.split(filename)
-            shutil.copyfile(filename, self.wd + self.lmp_script)
+            if self.ssh is None:
+                shutil.copyfile(filename, self.wd + self.lmp_script)
+            else:
+                subprocess.run(['rsync', '-av', filename, self.ssh + ':' + self.wd + self.lmp_script]) 
+                
         else:
             self.lmp_script = filename
 
@@ -100,16 +135,25 @@ class Simulator:
         :rtype: int
         """
         if computer is None and device is None:
-            device = self.Custom(**kwargs)
+            if self.ssh is None:
+                device = self.Custom(**kwargs)
+            else: 
+                device = self.Custom(**kwargs, ssh_dir = self.ssh + ':' + self.wd) # Go in here
         elif device is None:
             warnings.warn("'Computer' is deprecated from version 1.1.0 and is replaced by the more intuitive 'Device'", DeprecationWarning)
             device = computer
         main_path = os.getcwd()
-        if self.wd is not None:
-            os.chdir(self.wd)
-        job_id = device(self.lmp_script, self.var, stdout, stderr)
-        os.chdir(main_path)
+        
+        if self.ssh is None:
+            if self.wd is not None:
+                os.chdir(self.wd)
+            job_id = device(self.lmp_script, self.var, stdout, stderr)
+            os.chdir(main_path)
+        else:
+            job_id = device(self.lmp_script, self.var, stdout, stderr)
         return job_id
+    
+
 
 
     def run_custom(self, stdout=subprocess.DEVNULL,
