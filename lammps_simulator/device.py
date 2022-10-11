@@ -135,28 +135,43 @@ class Custom(Device):
         exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
         if self.slurm:
             if self.generate_jobscript:
-                if self.ssh_dir is None:
+                if self.ssh_dir is None: # Run locally
                     self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
                     output = str(subprocess.check_output(["sbatch", self.jobscript]))
                     job_id = int(re.findall("([0-9]+)", output)[0])
                     print(f"Job submitted with job ID {job_id}")
                     return job_id
-                else:
+                else: # Run on ssh 
                     self.gen_jobscript(exec_list, self.sendlabel + self.jobscript, self.slurm_args)
                     subprocess.run(['rsync', '-av', '--remove-source-files', self.sendlabel + self.jobscript, self.ssh_dir + self.jobscript]) 
                     ssh, wd = self.ssh_dir.split(':')
-                    #### Working here
-                    subprocess.check_output(['ssh', ssh, '"cd', {wd}, '&&', 'ls"'])
-                    exit()
-                    job_id = subprocess.check_output(['ssh', ssh, '"cd', wd, '&&', 'sbatch', f'{self.jobscript}"'])
-                    print(job_id)
-                    output = str(subprocess.check_output(["sbatch", self.jobscript]))
-                    job_id = int(re.findall("([0-9]+)", output)[0])
-                    print(f"Job submitted with job ID {job_id}")
+                    try:
+                        output = subprocess.run(["ssh", ssh, f"cd {wd} && sbatch {self.jobscript}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        job_id = int(re.findall("([0-9]+)", output.stdout.decode("utf-8"))[0])
+                        print(f"Job submitted with job ID {job_id}")
+                    except:
+                        print("SUMBITTING ERROR")
+                        print(output.stderr.decode("utf-8"))
+                        return 1 # Should we raise an error here?
+                    return job_id
+
         else:
-            procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
-            pid = procs.pid
-            print(f"Simulation started with process ID {pid}")
+            if self.ssh_dir is None:            
+                procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
+                pid = procs.pid
+                print(f"Simulation started with process ID {pid}")
+            else:
+                ssh, wd = self.ssh_dir.split(':')
+                try:
+                    output = subprocess.run(["ssh", ssh, f"cd {wd} && {' '.join(exec_list)}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    pid = 1
+                    # Not sure what to return here
+                    # Seems like it passes the try block 
+                    # even when it does obviously not work
+                except:
+                    print("SUMBITTING ERROR")
+                    return 1 # Should we raise an error here?
+
             return pid
 
 

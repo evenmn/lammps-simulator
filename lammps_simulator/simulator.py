@@ -134,11 +134,9 @@ class Simulator:
             job_id = device(self.lmp_script, self.var, stdout, stderr)
             os.chdir(main_path)
         else:
-            device(self.lmp_script, self.var, stdout, stderr)
-            exit()
+            job_id = device(self.lmp_script, self.var, stdout, stderr)
         return job_id
     
-        # job_id = subprocess.check_output(['ssh', self.ssh, '"cd', self.wd, '&&', 'sbatch', f'{jobscript}"'])
 
 
 
