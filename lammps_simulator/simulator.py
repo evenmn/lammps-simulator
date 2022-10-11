@@ -13,8 +13,7 @@ class Simulator:
     :type overwrite: bool
     """
 
-    # from .computer import Custom
-    from .device import Custom # Shouldn't we use this when Computer is deprecated 
+    from .device import Custom
 
     def __init__(self, directory=None, overwrite=False):
         if directory is None:
@@ -26,6 +25,8 @@ class Simulator:
                 self.ssh = None
                 self.wd = directory
             if overwrite:
+                self._make_dir(self.wd, self.ssh)
+                """
                 try:
                     if self.ssh is None:
                         os.makedirs(directory)
@@ -36,10 +37,18 @@ class Simulator:
                             raise FileExistsError
                 except FileExistsError:
                     pass
+                """
             else:
                 ext = 0
                 repeat = True
+                original_dir = self.wd
                 while repeat:
+                    print(self.wd)
+                    repeat = self._make_dir(self.wd, self.ssh)
+                    if repeat:
+                        ext += 1
+                        self.wd = original_dir + f"_{ext}"
+                    """
                     try:
                         if ssh is None: 
                             os.makedirs(self.wd)
@@ -52,13 +61,37 @@ class Simulator:
                     except FileExistsError:
                         ext += 1
                         self.wd = directory + f"_{ext}"
+                    """
             self.wd += "/"
 
+    @staticmethod
+    def _make_dir(dir_, host):
+        """Make directory, which might be on a remote node
+
+        :param dir_: directory
+        :type dir_: str
+        :param host: base host for simulation
+        :type host: str
+        :returns: True if directory exists, False if not
+        :rtype: bool
+        """
+        try:
+            if host is None:
+                os.makedirs(dir_)
+            else:
+                res = subprocess.Popen(['ssh', host, 'mkdir', dir_], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                output, error = res.communicate()
+                if "File exists" in str(error): 
+                    raise FileExistsError
+        except FileExistsError:
+            return True
+        return False
+        
 
     def copy_to_wd(self, *filename):
         """Copy one or several files to working directory.
 
-        :param filename: filename or list of filenames to copy
+        :param filename: filename or tuple of filenames to copy
         :type filename: str or tuple of str
         """
         if self.wd is None:
@@ -69,7 +102,7 @@ class Simulator:
                 if self.ssh is None:
                     shutil.copyfile(file, self.wd + tail)
                 else:
-                    # use subprocess.run for transfer to finsih before moving on
+                    # use subprocess.run for transfer to finish before moving on
                     subprocess.run(['rsync', '-av', file, self.ssh + ':' + self.wd + tail]) 
                     
 
@@ -85,6 +118,8 @@ class Simulator:
             warnings.warn("Working directory is not defined!")
         else:
             for dir in dirname:
+                self._make_dir(self.wd + dir, self.ssh)
+                """
                 try:
                     if self.ssh is None:
                             os.makedirs(self.wd + dir)
@@ -95,6 +130,7 @@ class Simulator:
                             raise FileExistsError
                 except FileExistsError:
                     pass
+                """
                         
 
     def set_input_script(self, filename, copy=True, **var):
@@ -113,6 +149,7 @@ class Simulator:
             if self.ssh is None:
                 shutil.copyfile(filename, self.wd + self.lmp_script)
             else:
+                print(self.ssh, self.wd, self.lmp_script)
                 subprocess.run(['rsync', '-av', filename, self.ssh + ':' + self.wd + self.lmp_script]) 
                 
         else:
