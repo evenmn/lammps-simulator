@@ -3,6 +3,7 @@ on:
   push:
     branches: 
       - master
+      - ssh
   
 jobs:
   deploy:

@@ -4,19 +4,49 @@ from numpy import ndarray
 
 
 class Device:
-    """Device base class, which controls how to run LAMMPS.
-    The required methods are __init__ and __call__.
+    """Device base class, executing the command
 
-    :param lmp_exec: LAMMPS executable
+        mpirun -n {num_procs} {lmp_exec} {lmp_script}
+
+    :param num_procs: number of processes, 1 by default
+    :type num_procs: int
+    :param lmp_exec: LAMMPS executable, 'lmp' by default
     :type lmp_exec: str
     :param lmp_args: LAMMPS command line arguments
     :type lmp_args: dict
+    :param slurm: whether or not simulation should be run from Slurm, 'False' by default
+    :type slurm: bool
+    :param slurm_args: slurm sbatch command line arguments
+    :type slurm_args: dict
+    :param generate_jobscript: whether or not jobscript should be generated, 'True' by default
+    :type generate_jobscript: bool
+    :param jobscript: filename of jobscript, 'job.sh' by default
+    :type jobscript: str
     """
-    def __init__(self, lmp_exec="lmp", lmp_args={}):
-        raise NotImplementedError("Class {} has no instance '__init__'."
-                                  .format(self.__class__.__name__))
+    def __init__(self, num_procs=1, lmp_exec="lmp", lmp_args={}, slurm=False,
+                 slurm_args={}, generate_jobscript=True, jobscript="job.sh",
+                 ssh_dir=None):
+        self.num_procs = num_procs
+        self.lmp_exec = lmp_exec
+        self.lmp_args = lmp_args
+        self.slurm = slurm
+        self.slurm_args = slurm_args
+        self.generate_jobscript = generate_jobscript
+        self.jobscript = jobscript
+        self.ssh_dir = ssh_dir
 
-    def __call__(self, lmp_script, lmp_var):
+        if self.ssh_dir is not None:
+            self.sendlabel = f"SEND_TO_SSH_"  # prefix of temporary jobscript
+
+
+    def __str__(self):
+        repr = "Custom"
+        if self.slurm:
+            repr += " (slurm)"
+        return repr
+
+
+    def __call__(self, lmp_script, lmp_var, stdout, stderr):
         """Start LAMMPS simulation
 
         :param lmp_script: LAMMPS script
@@ -26,8 +56,33 @@ class Device:
         :returns: job-ID
         :rtype: int
         """
-        raise NotImplementedError("Class {} has no instance '__call__'."
-                                  .format(self.__class__.__name__))
+        self.lmp_args["-in"] = lmp_script
+
+        exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+        if self.slurm:
+            if self.ssh_dir is None: # Run locally
+                if self.generate_jobscript:
+                    self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
+                output = subprocess.check_output(["sbatch", self.jobscript])
+            else: # Run on ssh 
+                if self.generate_jobscript:
+                    self.gen_jobscript(exec_list, self.sendlabel + self.jobscript, self.slurm_args)
+                subprocess.run(['rsync', '-av', '--remove-source-files', self.sendlabel + self.jobscript, self.ssh_dir + self.jobscript]) 
+                ssh, wd = self.ssh_dir.split(':')
+                output = subprocess.check_output(["ssh", ssh, f"cd {wd} && sbatch {self.jobscript}"])
+            job_id = int(re.findall("([0-9]+)", str(output))[0])
+            print(f"Job submitted with job ID {job_id}")
+            return job_id
+
+        else:
+            if self.ssh_dir is None: 
+                procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
+            else:
+                ssh, wd = self.ssh_dir.split(':')
+                procs = subprocess.Popen(["ssh", ssh, f"cd {wd} && {' '.join(exec_list)}"], stdout=stdout, stderr=stderr)
+            pid = procs.pid
+            print(f"Simulation started with process ID {pid}")
+            return pid
 
     @staticmethod
     def get_exec_list(num_procs, lmp_exec, lmp_args, lmp_var):
@@ -89,144 +144,25 @@ class Device:
 
 
 class Custom(Device):
-    """Run simulations. This method runs the executable
-
-        mpirun -n {num_procs} {lmp_exec} {lmp_script}
-
-    :param num_procs: number of processes, 1 by default
-    :type num_procs: int
-    :param lmp_exec: LAMMPS executable, 'lmp' by default
-    :type lmp_exec: str
-    :param lmp_args: LAMMPS command line arguments
-    :type lmp_args: dict
-    :param slurm: whether or not simulation should be run from Slurm, 'False' by default
-    :type slurm: bool
-    :param slurm_args: slurm sbatch command line arguments
-    :type slurm_args: dict
-    :param generate_jobscript: whether or not jobscript should be generated, 'True' by default
-    :type generate_jobscript: bool
-    :param jobscript: filename of jobscript, 'job.sh' by default
-    :type jobscript: str
-    """
-    def __init__(self, num_procs=1, lmp_exec="lmp", lmp_args={},
-                 slurm=False, slurm_args={}, generate_jobscript=True,
-                 jobscript="job.sh", ssh_dir = None):
-        self.num_procs = num_procs
-        self.lmp_exec = lmp_exec
-        self.lmp_args = lmp_args
-        self.slurm = slurm
-        self.slurm_args = slurm_args
-        self.generate_jobscript = generate_jobscript
-        self.jobscript = jobscript
-        self.ssh_dir = ssh_dir
-
-        if self.ssh_dir is not None:
-            self.sendlabel = f"SEND_TO_SSH_"
-
-    def __str__(self):
-        repr = "Custom"
-        if self.slurm:
-            repr += " (slurm)"
-        return repr
-
-    def __call__(self, lmp_script, lmp_var, stdout, stderr):
-        self.lmp_args["-in"] = lmp_script
-
-        exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
-        if self.slurm:
-            if self.generate_jobscript:
-                if self.ssh_dir is None: # Run locally
-                    self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
-                    output = str(subprocess.check_output(["sbatch", self.jobscript]))
-                    job_id = int(re.findall("([0-9]+)", output)[0])
-                    print(f"Job submitted with job ID {job_id}")
-                    return job_id
-                else: # Run on ssh 
-                    self.gen_jobscript(exec_list, self.sendlabel + self.jobscript, self.slurm_args)
-                    subprocess.run(['rsync', '-av', '--remove-source-files', self.sendlabel + self.jobscript, self.ssh_dir + self.jobscript]) 
-                    ssh, wd = self.ssh_dir.split(':')
-                    try:
-                        output = subprocess.run(["ssh", ssh, f"cd {wd} && sbatch {self.jobscript}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        job_id = int(re.findall("([0-9]+)", output.stdout.decode("utf-8"))[0])
-                        print(f"Job submitted with job ID {job_id}")
-                    except:
-                        print("SUMBITTING ERROR")
-                        print(output.stderr.decode("utf-8"))
-                        return 1 # Should we raise an error here?
-                    return job_id
-
-        else:
-            if self.ssh_dir is None: 
-                procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
-                pid = procs.pid
-                print(f"Simulation started with process ID {pid}")
-            else:
-                ssh, wd = self.ssh_dir.split(':')
-                try:
-                    output = subprocess.run(["ssh", ssh, f"cd {wd} && {' '.join(exec_list)}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    pid = 1
-                    # Not sure what to return here
-                    # Seems like it passes the try block 
-                    # even when it does obviously not work
-                except:
-                    print("SUMBITTING ERROR")
-                    return 1 # Should we raise an error here?
-
-            return pid
+    pass
 
 
 class CPU(Device):
-    """Run simulations on desk computer. This method runs the executable
-
-        mpirun -n {num_procs} {lmp_exec} {lmp_script}
-
-    and requires that LAMMPS is built with mpi.
-
-    :param num_procs: number of processes, 4 by default
-    :type num_procs: int
-    :param lmp_exec: LAMMPS executable, 'lmp' by default
-    :type lmp_exec: str
-    :param lmp_args: LAMMPS command line arguments
-    :type lmp_args: dict
-    """
-    def __init__(self, num_procs=4, lmp_exec="lmp", lmp_args={}):
-        self.num_procs = num_procs
-        self.lmp_exec = lmp_exec
-        self.lmp_args = lmp_args
-        self.slurm = False
-
     def __str__(self):
         return "CPU"
-
-    def __call__(self, lmp_script, lmp_var, stdout, stderr):
-        self.lmp_args["-in"] = lmp_script
-
-        exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
-        procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
-        pid = procs.pid
-        print(f"Simulation started with process ID {pid}")
-        return pid
 
 
 class GPU(Device):
     """Run simulations on gpu.
 
-        mpirun -n {num_procs} {lmp_exec} {lmp_script}
-
     :param gpus_per_node: GPUs per node, 1 by default
     :type gpus_per_node: int
-    :param lmp_exec: LAMMPS executable, 'lmp' by default
-    :type lmp_exec: str
-    :param lmp_args: LAMMPS command line arguments
-    :type lmp_args: dict
     :param mode: GPU mode, has to be either 'kokkos' or 'gpu', 'kokkos' by default
     :type mode: str
     """
-    def __init__(self, gpu_per_node=1, lmp_exec="lmp", lmp_args={},
-                 mode="kokkos"):
+    def __init__(self, gpu_per_node=1, mode="kokkos", **kwargs):
+        super().__init__(**kwargs)
         self.gpu_per_node = gpu_per_node
-        self.lmp_exec = lmp_exec
-        self.slurm = False
 
         if mode == "kokkos":
             default_lmp_args = {"-pk": "kokkos newton on neigh full",
@@ -239,56 +175,22 @@ class GPU(Device):
         else:
             raise NotImplementedError
 
-        self.lmp_args = {**default_lmp_args, **lmp_args}    # merge
+        self.lmp_args = {**default_lmp_args, **self.lmp_args}    # merge
 
     def __str__(self):
         return "GPU"
 
-    def __call__(self, lmp_script, lmp_var, stdout, stderr):
-        self.lmp_args["-in"] = lmp_script
-
-        exec_list = self.get_exec_list(self.gpu_per_node, self.lmp_exec, self.lmp_args, lmp_var)
-        procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
-        pid = procs.pid
-        print(f"Simulation started with process ID {pid}")
-        return pid
-
 
 class SlurmCPU(Device):
     """Run LAMMPS simulations on CPU cluster with the Slurm queueing system.
-    Generates jobscript consisting of sbatch command line arguments and
-    ends with
 
-        mpirun -n {num_procs} {lmp_exec} {lmp_script}
-
-    The generated jobscript is then executed by sbatch:
-
-        sbatch {jobscript}
-
-    :param num_nodes: number of nodes
-    :type num_nodes: int
-    :param lmp_exec: LAMMPS executable, 'lmp' by default
-    :type lmp_exec: str
-    :param lmp_args: LAMMPS command line arguments
-    :type lmp_args: dict
-    :param slurm_args: slurm sbatch command line arguments
-    :type slurm_args: dict
     :param procs_per_node: number of processes per node, 16 by default
     :type procs_per_node: int
-    :param generate_jobscript: whether or not jobscript should be generated, 'True' by default
-    :type generate_jobscript: bool
-    :param jobscript: filename of jobscript, 'job.sh' by default
-    :type jobscript: str
     """
-    def __init__(self, num_nodes, lmp_exec="lmp", lmp_args={}, slurm_args={},
-                 procs_per_node=16, generate_jobscript=True,
-                 jobscript="job.sh"):
+    def __init__(self, num_nodes, procs_per_node=16, **kwargs):
+        super().__init__(**kwargs)
         self.num_nodes = num_nodes
         self.num_procs = num_nodes * procs_per_node
-        self.lmp_exec = lmp_exec
-        self.generate_jobscript = generate_jobscript
-        self.jobscript = jobscript
-        self.slurm = True
 
         default_slurm_args = {"job-name": "CPU-job",
                               "partition": "normal",
@@ -297,56 +199,23 @@ class SlurmCPU(Device):
                               "output": "slurm.out",
                               }
 
-        self.slurm_args = {**default_slurm_args, **slurm_args}
-        self.lmp_args = lmp_args
+        self.slurm_args = {**default_slurm_args, **self.slurm_args}
 
     def __str__(self):
         return "CPU (slurm)"
 
-    def __call__(self, lmp_script, lmp_var, stdout, stderr):
-        self.lmp_args["-in"] = lmp_script
-
-        if self.generate_jobscript:
-            exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
-            self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
-        output = str(subprocess.check_output(["sbatch", self.jobscript], stderr=stderr))
-        job_id = int(re.findall("([0-9]+)", output)[0])
-        print(f"Job submitted with job ID {job_id}")
-        return job_id
-
 
 class SlurmGPU(Device):
     """Run LAMMPS simulations on GPU cluster with the Slurm queueing system.
-    Generates jobscript consisting of sbatch command line arguments and
-    ends with
-
-        mpirun -n {num_procs} {lmp_exec} {lmp_script}
-
-    The generated jobscript is then executed by sbatch:
-
-        sbatch {jobscript}
 
     :param gpu_per_node: number of GPUs
     :type gpu_per_node: int
-    :param lmp_exec: LAMMPS executable
-    :type lmp_exec: str
-    :param lmp_args: LAMMPS command line arguments
-    :type lmp_args: dict
-    :param slurm_args: slurm sbatch command line arguments
-    :type slurm_args: dict
-    :param generate_jobscript: whether or not jobscript should be generated, 'True' by default
-    :type generate_jobscript: bool
-    :param jobscript: filename of jobscript, 'job.sh' by default
-    :type jobscript: str
+    :param mode: GPU mode, has to be either 'kokkos' or 'gpu', 'kokkos' by default
+    :type mode: str
     """
-    def __init__(self, gpu_per_node=1, lmp_exec="lmp", lmp_args={},
-                 slurm_args={}, generate_jobscript=True, jobscript="job.sh",
-                 mode="kokkos"):
+    def __init__(self, gpu_per_node=1, mode="kokkos", **kwargs):
+        super().__init__(**kwargs)
         self.gpu_per_node = gpu_per_node
-        self.lmp_exec = lmp_exec
-        self.generate_jobscript = generate_jobscript
-        self.jobscript = jobscript
-        self.slurm = True
 
         default_slurm_args = {"job-name": "GPU-job",
                               "partition": "normal",
@@ -366,19 +235,8 @@ class SlurmGPU(Device):
         else:
             raise NotImplementedError
 
-        self.lmp_args = {**default_lmp_args, **lmp_args}    # merge
-        self.slurm_args = {**default_slurm_args, **slurm_args}
+        self.lmp_args = {**default_lmp_args, **self.lmp_args}    # merge
+        self.slurm_args = {**default_slurm_args, **self.slurm_args}
 
     def __str__(self):
         return "GPU (slurm)"
-
-    def __call__(self, lmp_script, lmp_var, stdout, stderr):
-        self.lmp_args["-in"] = lmp_script
-
-        if self.generate_jobscript:
-            exec_list = self.get_exec_list(self.gpu_per_node, self.lmp_exec, self.lmp_args, lmp_var)
-            self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
-        output = str(subprocess.check_output(["sbatch", self.jobscript], stderr=stderr))
-        job_id = int(re.findall("([0-9]+)", output)[0])
-        print(f"Job submitted with job ID {job_id}")
-        return job_id

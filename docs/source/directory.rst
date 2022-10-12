@@ -9,8 +9,20 @@ If one wants to specify the simulation directory, a custom :code:`Simulator` obj
 
    sim = Simulator(directory="simulation", overwrite=False)
 
-With having overwrite=False, an extention is added to the directory name if a directory with the same name exists. This is the default behavior, and one should be careful setting :code:`overwrite=True`.
+By setting :code:`overwrite=False`, an extention is added to the directory name if a directory with the same name exists. This is the default behavior, and one should be careful setting :code:`overwrite=True`.
 
+Using a remote directory
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The simulation can also be executed on a remote server. We follow the same convention as :code:`rsync` and :code:`scp`, and separate the host and directory by a colon:
+
+.. code-block:: python
+
+   from lammps_simulator import Simulator
+
+   sim = Simulator(directory="<hostname>:~/simulation")
+
+Then, files are copied using :code:`rsync` and commands are run remotely using :code:`ssh <hostname> <command>`.
 
 Copy files to directory
 ^^^^^^^^^^^^^^^^^^^^^^^^

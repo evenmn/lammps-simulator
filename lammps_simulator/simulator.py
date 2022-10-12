@@ -13,7 +13,7 @@ class Simulator:
     :type overwrite: bool
     """
 
-    from .device import Custom
+    from .device import Device
 
     def __init__(self, directory=None, overwrite=False):
         if directory is None:
@@ -133,21 +133,18 @@ class Simulator:
         """
         if computer is None and device is None:
             if self.ssh is None:
-                device = self.Custom(**kwargs)
+                device = self.Device(**kwargs)
             else: 
-                device = self.Custom(**kwargs, ssh_dir = self.ssh + ':' + self.wd) # Go in here
+                device = self.Device(**kwargs, ssh_dir = self.ssh + ':' + self.wd) # Go in here
         elif device is None:
             warnings.warn("'Computer' is deprecated from version 1.1.0 and is replaced by the more intuitive 'Device'", DeprecationWarning)
             device = computer
         main_path = os.getcwd()
         
-        if self.ssh is None:
-            if self.wd is not None:
-                os.chdir(self.wd)
-            job_id = device(self.lmp_script, self.var, stdout, stderr)
-            os.chdir(main_path)
-        else:
-            job_id = device(self.lmp_script, self.var, stdout, stderr)
+        if self.wd is not None and self.ssh is None:
+            os.chdir(self.wd)
+        job_id = device(self.lmp_script, self.var, stdout, stderr)
+        os.chdir(main_path)
         return job_id
     
 
