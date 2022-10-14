@@ -1,6 +1,7 @@
 import re
 import subprocess
 from numpy import ndarray
+import os # Consider changing back in simulator as before
 
 
 class Device:
@@ -24,20 +25,28 @@ class Device:
     :type jobscript: str
     """
     def __init__(self, num_procs=1, lmp_exec="lmp", lmp_args={}, slurm=False,
-                 slurm_args={}, generate_jobscript=True, jobscript="job.sh",
-                 ssh_dir=None, run = True):
+                 slurm_args={}, write_jobscript=True, jobname="job.ssh", job = None,
+                 dir=None, execute = True):
+        
         self.num_procs = num_procs
         self.lmp_exec = lmp_exec
         self.lmp_args = lmp_args
         self.slurm = slurm
         self.slurm_args = slurm_args
-        self.generate_jobscript = generate_jobscript
-        self.jobscript = jobscript
-        self.ssh_dir = ssh_dir
-        self.run = run
+        self.write_jobscript = write_jobscript
+        self.jobname = jobname 
+        self.job = job # Change to jobscript XXX
+        self.execute = execute
+        
+        if (":" in dir):
+            self.ssh, self.wd = dir.split(":")
+        else:
+            self.ssh = None
+            self.wd = dir
 
-        if self.ssh_dir is not None:
-            self.sendlabel = f"SEND_TO_SSH_"  # prefix of temporary jobscript
+        # This should be come DEPRECATED # XXX
+        # if self.ssh_dir is not None:
+        #     self.sendlabel = f"SEND_TO_SSH_"  # prefix of temporary jobscript
 
 
     def __str__(self):
@@ -57,39 +66,122 @@ class Device:
         :returns: job-ID
         :rtype: int
         """
+        
+        # self.lmp_args["-in"] = lmp_script
+
+        # exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+        # if self.slurm:
+        #     if self.generate_jobscript:
+        #         self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
+        #     output = str(subprocess.check_output(["sbatch", self.jobscript]))
+        #     job_id = int(re.findall("([0-9]+)", output)[0])
+        #     print(f"Job submitted with job ID {job_id}")
+        #     return job_id
+        # else:
+        #     procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
+        #     pid = procs.pid
+        #     print(f"Simulation started with process ID {pid}")
+        #     return pid
+       
         self.lmp_args["-in"] = lmp_script
         exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
        
-        if self.generate_jobscript:
-            if self.ssh_dir is None: # locally stored
-                self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
+        if self.write_jobscript:
+            if self.job is None:
+                self.job = self.gen_jobscript_string(exec_list, self.slurm_args)
+            if self.ssh is None: # locally stored
+                self.store_jobscript(self.job, self.wd + '/' + self.jobname)    
             else: # temporary locally stored
-                self.gen_jobscript(exec_list, self.sendlabel + self.jobscript, self.slurm_args)
-            
-        if not self.run: # Opportunity to just generate jobscript
+                print("let's go")
+                cmd = ['ssh', 'egil', f'cat - > {self.wd}/{self.jobname}']
+                print(cmd)
+                exit()
+                # Not sure if this is bad since
+                # I lost my connection after doing this 
+                # a few times... Might also be bad luck.
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+                p.communicate(input=str.encode(self.job))
+                #
+
+        if not self.execute: # Option to only generate jobscript
+            print("I'm out")
             return 0
         
         if self.slurm: # Run with slurm
-            if self.ssh_dir is None: # Run locally
-                output = subprocess.check_output(["sbatch", self.jobscript])
+            if self.ssh is None: # Run locally
+                output = subprocess.check_output(["sbatch", f'{self.wd}/{self.jobname}'])
             else: # Run on ssh 
-                subprocess.run(['rsync', '-av', '--remove-source-files', self.sendlabel + self.jobscript, self.ssh_dir + self.jobscript]) 
-                ssh, wd = self.ssh_dir.split(':')
-                output = subprocess.check_output(["ssh", ssh, f"cd {wd} && sbatch {self.jobscript}"])
+                raise NotImplementedError # Write diretly in the directory
+                # subprocess.run(['rsync', '-av', '--remove-source-files', self.sendlabel + self.jobname, self.ssh_dir + self.jobname]) 
+                # ssh, wd = self.ssh_dir.split(':')
+                # output = subprocess.check_output(["ssh", ssh, f"cd {wd} && sbatch {self.jobscript}"])
+            
             job_id = int(re.findall("([0-9]+)", str(output))[0])
             print(f"Job submitted with job ID {job_id}")
             return job_id
-         
+            
+      
         else: # Run directly 
-            if self.ssh_dir is None: 
+            if self.ssh is None: 
+                print(exec_list)
+                main_path = os.getcwd()
+                os.chdir(self.wd)
                 procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
+                os.chdir(main_path)
             else:
-                ssh, wd = self.ssh_dir.split(':')
-                procs = subprocess.Popen(["ssh", ssh, f"cd {wd} && {' '.join(exec_list)}"], stdout=stdout, stderr=stderr)
+                procs = subprocess.Popen(["ssh", self.ssh, f"cd {self.wd} && {' '.join(exec_list)}"], stdout=stdout, stderr=stderr)
             pid = procs.pid
             print(f"Simulation started with process ID {pid}")
             return pid
         
+        
+        
+        
+        
+        
+        # self.lmp_args["-in"] = lmp_script
+        # exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+       
+        # if self.generate_jobscript:
+        #     if self.ssh_dir is None: # locally stored
+        #         self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
+        #     else: # temporary locally stored
+        #         self.gen_jobscript(exec_list, self.sendlabel + self.jobscript, self.slurm_args)
+            
+        # if not self.run: # Opportunity to just generate jobscript
+        #     return 0
+        
+        # if self.slurm: # Run with slurm
+        #     if self.ssh_dir is None: # Run locally
+        #         output = subprocess.check_output(["sbatch", self.jobscript])
+        #     else: # Run on ssh 
+        #         subprocess.run(['rsync', '-av', '--remove-source-files', self.sendlabel + self.jobscript, self.ssh_dir + self.jobscript]) 
+        #         ssh, wd = self.ssh_dir.split(':')
+        #         output = subprocess.check_output(["ssh", ssh, f"cd {wd} && sbatch {self.jobscript}"])
+        #     job_id = int(re.findall("([0-9]+)", str(output))[0])
+        #     print(f"Job submitted with job ID {job_id}")
+        #     return job_id
+         
+        # else: # Run directly 
+        #     if self.ssh_dir is None: 
+        #         procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
+        #     else:
+        #         ssh, wd = self.ssh_dir.split(':')
+        #         procs = subprocess.Popen(["ssh", ssh, f"cd {wd} && {' '.join(exec_list)}"], stdout=stdout, stderr=stderr)
+        #     pid = procs.pid
+        #     print(f"Simulation started with process ID {pid}")
+        #     return pid
+
+ 
+    @staticmethod
+    def store_jobscript(string, path): 
+        # Might find better name but used write_jobscript
+        # for bool value
+        with open(path, "w") as f:
+            f.write(string)
+        
+            
+                
 
     @staticmethod
     def get_exec_list(num_procs, lmp_exec, lmp_args, lmp_var):
@@ -122,8 +214,10 @@ class Device:
                 exec_list.extend(["-var", key, str(value)])
         return exec_list
 
+ 
+
     @staticmethod
-    def gen_jobscript(exec_list, jobscript, slurm_args):
+    def gen_jobscript_string(exec_list, slurm_args): # TODO: Update docstring 
         """Generate jobscript:
 
             #!/bin/bash
@@ -134,20 +228,20 @@ class Device:
 
         :param exec_list: list of strings to be executed
         :type exec_list: list
-        :param jobscript: name of jobscript to be generated
-        :type jobscript: str
         :param slurm_args: slurm sbatch command line arguments to be used
         :type slurm_args: dict
         """
-        with open(jobscript, "w") as f:
-            f.write("#!/bin/bash\n\n")
-            for key, setting in slurm_args.items():
-                if setting is None:
-                    f.write(f"#SBATCH --{key}\n#\n")
-                else:
-                    f.write(f"#SBATCH --{key}={setting}\n#\n")
-            f.write("\n")
-            f.write(" ".join(exec_list))
+        
+        string = "#!/bin/bash\n\n"
+        for key, setting in slurm_args.items():
+            if setting is None:
+                string += f"#SBATCH --{key}\n#\n"
+            else:
+                string += f"#SBATCH --{key}={setting}\n#\n"
+        string += "\n"
+        string += " ".join(exec_list)
+        return string
+        
 
 
 class Custom(Device):

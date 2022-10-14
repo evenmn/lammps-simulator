@@ -18,6 +18,9 @@ class Simulator:
     def __init__(self, directory=None, overwrite=False):
         
         self.jobscript = None # Option to store jobscript in simulator class
+        self.my_settings = {'dir': directory} # find better name
+        
+        # self.run = None
         
         if directory is None:
             self.wd = None
@@ -134,44 +137,50 @@ class Simulator:
         :returns: job-ID
         :rtype: int
         """
+        self.set_run_settings(**kwargs)
+        self.set_run_settings(job = self.jobscript)
+     
+            
         if computer is None and device is None:
-            if self.ssh is None:
-                device = self.Device(**kwargs)
-            else: 
-                device = self.Device(**kwargs, ssh_dir = self.ssh + ':' + self.wd) 
+            # if self.ssh is None:
+            device = self.Device(**self.my_settings) # <----
+            # else: 
+            #     device = self.Device(**kwargs, ssh_dir = self.ssh + ':' + self.wd) 
         elif device is None:
             warnings.warn("'Computer' is deprecated from version 1.1.0 and is replaced by the more intuitive 'Device'", DeprecationWarning)
             device = computer
-        main_path = os.getcwd()
+        # main_path = os.getcwd()
         
-        if self.wd is not None and self.ssh is None:
-            os.chdir(self.wd)
+        
+        # if self.wd is not None and self.ssh is None:
+        #     os.chdir(self.wd)
+             
         job_id = device(self.lmp_script, self.var, stdout, stderr)
-        os.chdir(main_path)
+        # os.chdir(main_path) 
         return job_id
     
+    def set_run_settings(self, **kwargs):
+        # Update dict: Merge where kwargs overwrites
+        old_dict = self.my_settings
+        self.my_settings = self.my_settings | kwargs 
+        for key in old_dict:
+            if not old_dict[key] == self.my_settings[key]:
+                print(f'WARNING: \'{key}\' got updated from {old_dict[key]} to {self.my_settings[key]} and might not match any pregeneraterd jobscripts.')
 
-    def get_exec_list(self, num_procs, lmp_exec, lmp_args, lmp_var):
-        exec_list = ["mpirun", "-n", str(num_procs), lmp_exec]
-        for key, value in lmp_args.items():
-            exec_list.append(key)
-            exec_list.extend(str(value).split())
-        for key, value in lmp_var.items():
-            # variable may be an LAMMPS index variable
-            if type(value) in [list, tuple, ndarray]:
-                exec_list.extend(["-var", key])
-                exec_list.extend(map(str, list(value)))
-            else:
-                exec_list.extend(["-var", key, str(value)])
-        return exec_list
 
-    def gen_jobscript(self, num_procs, lmp_exec, slurm_args, lmp_args = {}):
-        lmp_args["-in"] = self.lmp_script
-        exec_list = self.get_exec_list(num_procs, lmp_exec, lmp_args, self.var)
+    # Change name to: pregenerate_jobscript? XXX
+    # and then use gen_jobscript_string from Device XXX
+    def generate_jobscript(self, **kwargs):
+        self.set_run_settings(**kwargs)
+        
+        self.my_settings = {'lmp_args': {}} | self.my_settings
+        self.my_settings['lmp_args']['-in'] = self.lmp_script
+        
+        exec_list = self.Device.get_exec_list(self.my_settings['num_procs'] , self.my_settings['lmp_exec'], self.my_settings['lmp_args'], self.var)
         
         self.jobscript = ''
         self.jobscript += "#!/bin/bash\n\n"
-        for key, setting in slurm_args.items():
+        for key, setting in self.my_settings['slurm_args'].items():
             if setting is None:
                 self.jobscript += f"#SBATCH --{key}\n#\n"
             else:
@@ -179,15 +188,17 @@ class Simulator:
         self.jobscript +=  "\n"
         self.jobscript += " ".join(exec_list)
         self.jobscript +=  "\n"
+        
+   
+        
 
 
-    # Maybe not nessecary but one avoids to manual linebreaks each time
-    # And we could have safety check if self.jobscript = None.
-    # But one might also build the jobscript from the bottom in this manner...
     def add_to_jobscript(self, string, linebreak = True):
+        assert(isinstance(self.jobscript, str)), "Cannot add to jobscript when not initialized"
         self.jobscript += string
         if linebreak: 
             self.jobscript += "\n"
+      
 
 
 
