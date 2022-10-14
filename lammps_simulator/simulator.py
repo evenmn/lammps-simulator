@@ -16,6 +16,9 @@ class Simulator:
     from .device import Device
 
     def __init__(self, directory=None, overwrite=False):
+        
+        self.jobscript = None # Option to store jobscript in simulator class
+        
         if directory is None:
             self.wd = None
         else:
@@ -135,7 +138,7 @@ class Simulator:
             if self.ssh is None:
                 device = self.Device(**kwargs)
             else: 
-                device = self.Device(**kwargs, ssh_dir = self.ssh + ':' + self.wd) # Go in here
+                device = self.Device(**kwargs, ssh_dir = self.ssh + ':' + self.wd) 
         elif device is None:
             warnings.warn("'Computer' is deprecated from version 1.1.0 and is replaced by the more intuitive 'Device'", DeprecationWarning)
             device = computer
@@ -147,6 +150,44 @@ class Simulator:
         os.chdir(main_path)
         return job_id
     
+
+    def get_exec_list(self, num_procs, lmp_exec, lmp_args, lmp_var):
+        exec_list = ["mpirun", "-n", str(num_procs), lmp_exec]
+        for key, value in lmp_args.items():
+            exec_list.append(key)
+            exec_list.extend(str(value).split())
+        for key, value in lmp_var.items():
+            # variable may be an LAMMPS index variable
+            if type(value) in [list, tuple, ndarray]:
+                exec_list.extend(["-var", key])
+                exec_list.extend(map(str, list(value)))
+            else:
+                exec_list.extend(["-var", key, str(value)])
+        return exec_list
+
+    def gen_jobscript(self, num_procs, lmp_exec, slurm_args, lmp_args = {}):
+        lmp_args["-in"] = self.lmp_script
+        exec_list = self.get_exec_list(num_procs, lmp_exec, lmp_args, self.var)
+        
+        self.jobscript = ''
+        self.jobscript += "#!/bin/bash\n\n"
+        for key, setting in slurm_args.items():
+            if setting is None:
+                self.jobscript += f"#SBATCH --{key}\n#\n"
+            else:
+                self.jobscript += f"#SBATCH --{key}={setting}\n#\n"
+        self.jobscript +=  "\n"
+        self.jobscript += " ".join(exec_list)
+        self.jobscript +=  "\n"
+
+
+    # Maybe not nessecary but one avoids to manual linebreaks each time
+    # And we could have safety check if self.jobscript = None.
+    # But one might also build the jobscript from the bottom in this manner...
+    def add_to_jobscript(self, string, linebreak = True):
+        self.jobscript += string
+        if linebreak: 
+            self.jobscript += "\n"
 
 
 

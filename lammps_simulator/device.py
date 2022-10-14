@@ -25,7 +25,7 @@ class Device:
     """
     def __init__(self, num_procs=1, lmp_exec="lmp", lmp_args={}, slurm=False,
                  slurm_args={}, generate_jobscript=True, jobscript="job.sh",
-                 ssh_dir=None):
+                 ssh_dir=None, run = True):
         self.num_procs = num_procs
         self.lmp_exec = lmp_exec
         self.lmp_args = lmp_args
@@ -34,6 +34,7 @@ class Device:
         self.generate_jobscript = generate_jobscript
         self.jobscript = jobscript
         self.ssh_dir = ssh_dir
+        self.run = run
 
         if self.ssh_dir is not None:
             self.sendlabel = f"SEND_TO_SSH_"  # prefix of temporary jobscript
@@ -57,24 +58,29 @@ class Device:
         :rtype: int
         """
         self.lmp_args["-in"] = lmp_script
-
         exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
-        if self.slurm:
+       
+        if self.generate_jobscript:
+            if self.ssh_dir is None: # locally stored
+                self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
+            else: # temporary locally stored
+                self.gen_jobscript(exec_list, self.sendlabel + self.jobscript, self.slurm_args)
+            
+        if not self.run: # Opportunity to just generate jobscript
+            return 0
+        
+        if self.slurm: # Run with slurm
             if self.ssh_dir is None: # Run locally
-                if self.generate_jobscript:
-                    self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
                 output = subprocess.check_output(["sbatch", self.jobscript])
             else: # Run on ssh 
-                if self.generate_jobscript:
-                    self.gen_jobscript(exec_list, self.sendlabel + self.jobscript, self.slurm_args)
                 subprocess.run(['rsync', '-av', '--remove-source-files', self.sendlabel + self.jobscript, self.ssh_dir + self.jobscript]) 
                 ssh, wd = self.ssh_dir.split(':')
                 output = subprocess.check_output(["ssh", ssh, f"cd {wd} && sbatch {self.jobscript}"])
             job_id = int(re.findall("([0-9]+)", str(output))[0])
             print(f"Job submitted with job ID {job_id}")
             return job_id
-
-        else:
+         
+        else: # Run directly 
             if self.ssh_dir is None: 
                 procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
             else:
@@ -83,6 +89,7 @@ class Device:
             pid = procs.pid
             print(f"Simulation started with process ID {pid}")
             return pid
+        
 
     @staticmethod
     def get_exec_list(num_procs, lmp_exec, lmp_args, lmp_var):
