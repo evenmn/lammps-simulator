@@ -9,25 +9,25 @@ class Device:
 
         mpirun -n {num_procs} {lmp_exec} {lmp_script}
 
-    :param num_procs: number of processes, 1 by default
+    :param num_procs: number of processes, 1 by default.
     :type num_procs: int
-    :param lmp_exec: LAMMPS executable, 'lmp' by default
+    :param lmp_exec: LAMMPS executable, 'lmp' by default.
     :type lmp_exec: str
-    :param lmp_args: LAMMPS command line arguments
+    :param lmp_args: LAMMPS command line arguments.
     :type lmp_args: dict
-    :param slurm: whether or not simulation should be run from Slurm, 'False' by default
+    :param slurm: whether or not simulation should be run from Slurm, 'False' by default.
     :type slurm: bool
-    :param slurm_args: slurm sbatch command line arguments
+    :param slurm_args: slurm sbatch command line arguments.
     :type slurm_args: dict
-    :param write_jobscript: whether or not to write jobscript, 'True by default'
+    :param write_jobscript: whether or not to write jobscript, 'True by default'.
     :type write_jobscript: bool
-    :param jopscript_name: filename of jobscript, 'job.sh' by default
+    :param jopscript_name: filename of jobscript, 'job.sh' by default.
     :type jobscript: str
-    :param jobscript_string: container for jobscript text, 'None' by default  
-    :type string / NoneType
-    :param dir: working directory including any ssh path, 'None' by default (must be updated)
-    :type string / NoneType
-    :param execute: whether or not to run the program, 'True' by default
+    :param jobscript_string: container for jobscript text, 'None' by default.
+    :type str / NoneType
+    :param dir: working directory including any ssh path, 'None' by default (must be updated).
+    :type str / NoneType
+    :param execute: whether or not to run the program, 'True' by default.
     :type bool
     """
     def __init__(self, num_procs=1, lmp_exec="lmp", lmp_args={}, slurm=False,
@@ -111,51 +111,13 @@ class Device:
         
         
         
-        
-        
-        
-        # self.lmp_args["-in"] = lmp_script
-        # exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
-       
-        # if self.generate_jobscript:
-        #     if self.ssh_dir is None: # locally stored
-        #         self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
-        #     else: # temporary locally stored
-        #         self.gen_jobscript(exec_list, self.sendlabel + self.jobscript, self.slurm_args)
-            
-        # if not self.run: # Opportunity to just generate jobscript
-        #     return 0
-        
-        # if self.slurm: # Run with slurm
-        #     if self.ssh_dir is None: # Run locally
-        #         output = subprocess.check_output(["sbatch", self.jobscript])
-        #     else: # Run on ssh 
-        #         subprocess.run(['rsync', '-av', '--remove-source-files', self.sendlabel + self.jobscript, self.ssh_dir + self.jobscript]) 
-        #         ssh, wd = self.ssh_dir.split(':')
-        #         output = subprocess.check_output(["ssh", ssh, f"cd {wd} && sbatch {self.jobscript}"])
-        #     job_id = int(re.findall("([0-9]+)", str(output))[0])
-        #     print(f"Job submitted with job ID {job_id}")
-        #     return job_id
-         
-        # else: # Run directly 
-        #     if self.ssh_dir is None: 
-        #         procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
-        #     else:
-        #         ssh, wd = self.ssh_dir.split(':')
-        #         procs = subprocess.Popen(["ssh", ssh, f"cd {wd} && {' '.join(exec_list)}"], stdout=stdout, stderr=stderr)
-        #     pid = procs.pid
-        #     print(f"Simulation started with process ID {pid}")
-        #     return pid
-
  
     @staticmethod
     def store_jobscript(string, path): 
-        # Might find better name but used write_jobscript
-        # for bool value
+        # Might find better name but used write_jobscript for bool value
         with open(path, "w") as f:
             f.write(string)
         
-            
                 
 
     @staticmethod
@@ -193,7 +155,7 @@ class Device:
 
     @staticmethod
     def gen_jobscript_string(exec_list, slurm_args): # TODO: Update docstring 
-        """Generate jobscript:
+        """Generate jobscript string:
 
             #!/bin/bash
             #SBATCH --{key1}={value1}
