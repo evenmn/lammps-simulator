@@ -17,7 +17,7 @@ class Simulator:
 
     def __init__(self, directory=None, overwrite=False):
         
-        self.jobscript = None # Option to store jobscript in simulator class
+        self.jobscript_string = None # Option to store jobscript in simulator class
         self.my_settings = {'dir': directory} # find better name
         
         # self.run = None
@@ -138,25 +138,14 @@ class Simulator:
         :rtype: int
         """
         self.set_run_settings(**kwargs)
-        self.set_run_settings(job = self.jobscript)
-     
-            
+        self.set_run_settings(jobscript_string = self.jobscript_string)
         if computer is None and device is None:
-            # if self.ssh is None:
-            device = self.Device(**self.my_settings) # <----
-            # else: 
-            #     device = self.Device(**kwargs, ssh_dir = self.ssh + ':' + self.wd) 
+            device = self.Device(**self.my_settings)
         elif device is None:
             warnings.warn("'Computer' is deprecated from version 1.1.0 and is replaced by the more intuitive 'Device'", DeprecationWarning)
             device = computer
-        # main_path = os.getcwd()
-        
-        
-        # if self.wd is not None and self.ssh is None:
-        #     os.chdir(self.wd)
              
         job_id = device(self.lmp_script, self.var, stdout, stderr)
-        # os.chdir(main_path) 
         return job_id
     
     def set_run_settings(self, **kwargs):
@@ -168,36 +157,24 @@ class Simulator:
                 print(f'WARNING: \'{key}\' got updated from {old_dict[key]} to {self.my_settings[key]} and might not match any pregeneraterd jobscripts.')
 
 
-    # Change name to: pregenerate_jobscript? XXX
-    # and then use gen_jobscript_string from Device XXX
-    def generate_jobscript(self, **kwargs):
+   
+    def pre_generate_jobscript(self, **kwargs):
         self.set_run_settings(**kwargs)
-        
         self.my_settings = {'lmp_args': {}} | self.my_settings
         self.my_settings['lmp_args']['-in'] = self.lmp_script
         
         exec_list = self.Device.get_exec_list(self.my_settings['num_procs'] , self.my_settings['lmp_exec'], self.my_settings['lmp_args'], self.var)
-        
-        self.jobscript = ''
-        self.jobscript += "#!/bin/bash\n\n"
-        for key, setting in self.my_settings['slurm_args'].items():
-            if setting is None:
-                self.jobscript += f"#SBATCH --{key}\n#\n"
-            else:
-                self.jobscript += f"#SBATCH --{key}={setting}\n#\n"
-        self.jobscript +=  "\n"
-        self.jobscript += " ".join(exec_list)
-        self.jobscript +=  "\n"
-        
+        self.jobscript_string = self.Device.gen_jobscript_string(exec_list, self.my_settings['slurm_args'])
+     
    
         
 
 
     def add_to_jobscript(self, string, linebreak = True):
-        assert(isinstance(self.jobscript, str)), "Cannot add to jobscript when not initialized"
-        self.jobscript += string
+        assert(isinstance(self.jobscript_string, str)), "Cannot add to jobscript when not initialized"
+        self.jobscript_string += string
         if linebreak: 
-            self.jobscript += "\n"
+            self.jobscript_string += "\n"
       
 
 

@@ -19,13 +19,19 @@ class Device:
     :type slurm: bool
     :param slurm_args: slurm sbatch command line arguments
     :type slurm_args: dict
-    :param generate_jobscript: whether or not jobscript should be generated, 'True' by default
-    :type generate_jobscript: bool
-    :param jobscript: filename of jobscript, 'job.sh' by default
+    :param write_jobscript: whether or not to write jobscript, 'True by default'
+    :type write_jobscript: bool
+    :param jopscript_name: filename of jobscript, 'job.sh' by default
     :type jobscript: str
+    :param jobscript_string: container for jobscript text, 'None' by default  
+    :type string / NoneType
+    :param dir: working directory including any ssh path, 'None' by default (must be updated)
+    :type string / NoneType
+    :param execute: whether or not to run the program, 'True' by default
+    :type bool
     """
     def __init__(self, num_procs=1, lmp_exec="lmp", lmp_args={}, slurm=False,
-                 slurm_args={}, write_jobscript=True, jobname="job.ssh", job = None,
+                 slurm_args={}, write_jobscript=True, jobscript_name="job.sh", jobscript_string = None,
                  dir=None, execute = True):
         
         self.num_procs = num_procs
@@ -34,8 +40,8 @@ class Device:
         self.slurm = slurm
         self.slurm_args = slurm_args
         self.write_jobscript = write_jobscript
-        self.jobname = jobname 
-        self.job = job # Change to jobscript XXX
+        self.jobscript_name = jobscript_name 
+        self.jobscript_string = jobscript_string # Change to jobscript XXX
         self.execute = execute
         
         if (":" in dir):
@@ -43,10 +49,6 @@ class Device:
         else:
             self.ssh = None
             self.wd = dir
-
-        # This should be come DEPRECATED # XXX
-        # if self.ssh_dir is not None:
-        #     self.sendlabel = f"SEND_TO_SSH_"  # prefix of temporary jobscript
 
 
     def __str__(self):
@@ -67,54 +69,27 @@ class Device:
         :rtype: int
         """
         
-        # self.lmp_args["-in"] = lmp_script
-
-        # exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
-        # if self.slurm:
-        #     if self.generate_jobscript:
-        #         self.gen_jobscript(exec_list, self.jobscript, self.slurm_args)
-        #     output = str(subprocess.check_output(["sbatch", self.jobscript]))
-        #     job_id = int(re.findall("([0-9]+)", output)[0])
-        #     print(f"Job submitted with job ID {job_id}")
-        #     return job_id
-        # else:
-        #     procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
-        #     pid = procs.pid
-        #     print(f"Simulation started with process ID {pid}")
-        #     return pid
-       
         self.lmp_args["-in"] = lmp_script
         exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
        
         if self.write_jobscript:
-            if self.job is None:
-                self.job = self.gen_jobscript_string(exec_list, self.slurm_args)
+            if self.jobscript_string is None:
+                self.jobscript_string = self.gen_jobscript_string(exec_list, self.slurm_args)
             if self.ssh is None: # locally stored
-                self.store_jobscript(self.job, self.wd + '/' + self.jobname)    
+                self.store_jobscript(self.jobscript_string, self.wd + '/' + self.jobscript_name)    
             else: # temporary locally stored
-                print("let's go")
-                cmd = ['ssh', 'egil', f'cat - > {self.wd}/{self.jobname}']
-                print(cmd)
-                exit()
-                # Not sure if this is bad since
-                # I lost my connection after doing this 
-                # a few times... Might also be bad luck.
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-                p.communicate(input=str.encode(self.job))
-                #
+                p = subprocess.Popen(['ssh', 'egil', f'cat - > {self.wd}/{self.jobscript_name}'], stdin=subprocess.PIPE)
+                p.communicate(input=str.encode(self.jobscript_string))
 
         if not self.execute: # Option to only generate jobscript
-            print("I'm out")
+            print("Simulation run finished with \'execute = False\'")
             return 0
         
         if self.slurm: # Run with slurm
             if self.ssh is None: # Run locally
-                output = subprocess.check_output(["sbatch", f'{self.wd}/{self.jobname}'])
+                output = subprocess.check_output(["sbatch", f'{self.wd}/{self.jobscript_name}'])
             else: # Run on ssh 
-                raise NotImplementedError # Write diretly in the directory
-                # subprocess.run(['rsync', '-av', '--remove-source-files', self.sendlabel + self.jobname, self.ssh_dir + self.jobname]) 
-                # ssh, wd = self.ssh_dir.split(':')
-                # output = subprocess.check_output(["ssh", ssh, f"cd {wd} && sbatch {self.jobscript}"])
+                output = subprocess.check_output(["ssh", self.ssh, f"cd {self.wd} && sbatch {self.jobscript_name}"])
             
             job_id = int(re.findall("([0-9]+)", str(output))[0])
             print(f"Job submitted with job ID {job_id}")
@@ -240,6 +215,7 @@ class Device:
                 string += f"#SBATCH --{key}={setting}\n#\n"
         string += "\n"
         string += " ".join(exec_list)
+        string += "\n"
         return string
         
 
