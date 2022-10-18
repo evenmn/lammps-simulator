@@ -146,6 +146,9 @@ class Simulator:
             device = computer
              
         job_id = device(self.lmp_script, self.var, stdout, stderr)
+        if job_id == 0 & kwargs['execute'] == False:
+            print("Simulation.run() finished with \'execute = False\'")
+            
         return job_id
     
     def set_run_settings(self, **kwargs):

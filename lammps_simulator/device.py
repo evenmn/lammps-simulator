@@ -1,7 +1,8 @@
 import re
 import subprocess
 from numpy import ndarray
-import os # Consider changing back in simulator as before
+import os 
+import warnings
 
 
 class Device:
@@ -41,14 +42,18 @@ class Device:
         self.slurm_args = slurm_args
         self.write_jobscript = write_jobscript
         self.jobscript_name = jobscript_name 
-        self.jobscript_string = jobscript_string # Change to jobscript XXX
+        self.jobscript_string = jobscript_string 
         self.execute = execute
         
-        if (":" in dir):
-            self.ssh, self.wd = dir.split(":")
+        if dir is not None:
+            if (":" in dir):
+                self.ssh, self.wd = dir.split(":")
+            else:
+                self.ssh = None
+                self.wd = dir
         else:
-            self.ssh = None
-            self.wd = dir
+            warnings.warn("Working directory is not defined!")
+           
 
 
     def __str__(self):
@@ -82,7 +87,6 @@ class Device:
                 p.communicate(input=str.encode(self.jobscript_string))
 
         if not self.execute: # Option to only generate jobscript
-            print("Simulation run finished with \'execute = False\'")
             return 0
         
         if self.slurm: # Run with slurm
@@ -98,7 +102,6 @@ class Device:
       
         else: # Run directly 
             if self.ssh is None: 
-                print(exec_list)
                 main_path = os.getcwd()
                 os.chdir(self.wd)
                 procs = subprocess.Popen(exec_list, stdout=stdout, stderr=stderr)
@@ -114,7 +117,7 @@ class Device:
  
     @staticmethod
     def store_jobscript(string, path): 
-        # Might find better name but used write_jobscript for bool value
+        # Might find better name but used 'write_jobscript' for bool value
         with open(path, "w") as f:
             f.write(string)
         
@@ -138,6 +141,7 @@ class Device:
         :returns: list with mpirun executables
         :rtype: list of str
         """
+       
         exec_list = ["mpirun", "-n", str(num_procs), lmp_exec]
         for key, value in lmp_args.items():
             exec_list.append(key)
@@ -154,7 +158,7 @@ class Device:
  
 
     @staticmethod
-    def gen_jobscript_string(exec_list, slurm_args): # TODO: Update docstring 
+    def gen_jobscript_string(exec_list, slurm_args):  
         """Generate jobscript string:
 
             #!/bin/bash
