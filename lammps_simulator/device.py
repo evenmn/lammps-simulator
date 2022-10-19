@@ -158,7 +158,7 @@ class Device:
  
 
     @staticmethod
-    def gen_jobscript_string(exec_list, slurm_args):  
+    def gen_jobscript_string(exec_list, slurm_args, linebreak = True):  
         """Generate jobscript string:
 
             #!/bin/bash
@@ -181,7 +181,8 @@ class Device:
                 string += f"#SBATCH --{key}={setting}\n#\n"
         string += "\n"
         string += " ".join(exec_list)
-        string += "\n"
+        if linebreak:
+            string += "\n"
         return string
         
 
