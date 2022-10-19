@@ -145,10 +145,13 @@ class Simulator:
             warnings.warn("'Computer' is deprecated from version 1.1.0 and is replaced by the more intuitive 'Device'", DeprecationWarning)
             device = computer
              
-        job_id = device(self.lmp_script, self.var, stdout, stderr)
-        if job_id == 0 & kwargs['execute'] == False:
-            print("Simulation.run() finished with \'execute = False\'")
-            
+        job_id = device(self.lmp_script, self.var, stdout, stderr)   
+        try: 
+            if kwargs['execute'] == False:
+                print("Simulation.run() finished with \'execute = False\'")
+        except KeyError:
+            pass
+        
         return job_id
     
     def set_run_settings(self, **kwargs):
