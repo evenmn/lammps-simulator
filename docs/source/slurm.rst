@@ -84,6 +84,7 @@ Similarly, :code:`SlurmGPU` takes the additional arguments :code:`gpu_per_node` 
 
 More about LAMMPS arguments on the next page.
 
+
 Array jobs
 ^^^^^^^^^^^
 
@@ -105,3 +106,20 @@ Slurm array jobs can also easily be submitted. In the example below, an array of
    sim = Simulator(directory="simulation")
    sim.set_input_script("script.in", temp="${SLURM_ARRAY_TASK_ID}")
    sim.run(device=device)
+
+
+Adding lines to job script
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+One can pregenerate a job script using
+
+.. code-block:: python
+
+    sim.pre_generate_jobscript(num_procs=4, lmp_exec="lmp", slurm_args = slurm_args)
+
+and then add more lines to the job script before submitting the job:
+
+.. code-block:: python
+    sim.add_to_jobscript(" \n line1 \n line2")
+
+

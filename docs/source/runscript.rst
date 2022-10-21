@@ -1,7 +1,7 @@
 Running a LAMMPS script
 =======================
 
-The simplest way of running a LAMMPS script is through the pre-made :code:`sim` simulation object. A LAMMPS simulation with the script :code:`script.in` can then easily be launched using
+The simplest way of running a LAMMPS script is through the pre-made :code:`sim` simulation object. A LAMMPS simulation with the script :code:`script.in` can then be launched using
 
 .. code-block:: python
 
@@ -22,6 +22,6 @@ Sometimes it can be useful to define a :code:`Device` object, especially when ru
    device = CPU(num_procs=4, lmp_exec="lmp")
    sim.run(device=device)
 
-Other devices include :code:`GPU` (run LAMMPS with the :code:`GPU` or :code:`KOKKOS` package), :code:`SlurmCPU` (submit LAMMPS CPU jobs to Slurm) and :code:`SlurmGPU` (submit LAMMPS GPU jobs to Slurm). The Slurm support is further described in the Slurm-section. There is also a :code:`Custom` device which can do everything that the other devices can do, including submitting jobs to Slurm.
+Other devices include :code:`GPU` (run LAMMPS with the :code:`GPU` or :code:`KOKKOS` package), :code:`SlurmCPU` (submit LAMMPS CPU jobs to Slurm) and :code:`SlurmGPU` (submit LAMMPS GPU jobs to Slurm). The Slurm support is further described in the Slurm-section.
 
 
