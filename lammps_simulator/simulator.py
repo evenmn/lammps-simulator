@@ -16,11 +16,8 @@ class Simulator:
     from .device import Device
 
     def __init__(self, directory=None, overwrite=False):
-        
         self.jobscript_string = None # Option to store jobscript in simulator class
-        self.sim_settings = {'dir': directory} # find better name
-        
-        # self.run = None
+        self.sim_settings = {'dir': directory} 
         
         if directory is None:
             self.wd = None
@@ -187,9 +184,6 @@ class Simulator:
         self.jobscript_string = self.Device.gen_jobscript_string(exec_list, self.sim_settings['slurm_args'])
      
    
-        
-
-
     def add_to_jobscript(self, string, linebreak = True):
         """ Add a string to already exisitng self.jobscript_string.
         
@@ -203,8 +197,6 @@ class Simulator:
         if linebreak: 
             self.jobscript_string += "\n"
       
-
-
 
     def run_custom(self, stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE, **kwargs):

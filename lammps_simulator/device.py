@@ -120,8 +120,7 @@ class Device:
         # Might find better name but used 'write_jobscript' for bool value
         with open(path, "w") as f:
             f.write(string)
-        
-                
+             
 
     @staticmethod
     def get_exec_list(num_procs, lmp_exec, lmp_args, lmp_var):
