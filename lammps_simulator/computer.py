@@ -118,6 +118,7 @@ class Custom(Computer):
         self.slurm_args = slurm_args
         self.generate_jobscript = generate_jobscript
         self.jobscript = jobscript
+        
 
     def __str__(self):
         repr = "Custom"
