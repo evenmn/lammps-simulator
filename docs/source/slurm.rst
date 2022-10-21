@@ -120,6 +120,8 @@ One can pregenerate a job script using
 and then add more lines to the job script before submitting the job:
 
 .. code-block:: python
+
     sim.add_to_jobscript(" \n line1 \n line2")
+
 
 
