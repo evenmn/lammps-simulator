@@ -25,15 +25,17 @@ class Device:
     :param jopscript_name: filename of jobscript, 'job.sh' by default.
     :type jobscript: str
     :param jobscript_string: container for jobscript text, 'None' by default.
-    :type str / NoneType
+    :type jobscript_string: str / NoneType
     :param dir: working directory including any ssh path, 'None' by default (must be updated).
-    :type str / NoneType
+    :type dir: str / NoneType
     :param execute: whether or not to run the program, 'True' by default.
-    :type bool
+    :type execute: bool
+    :param activate_virtual: Activate virtual cores
+    :type activate_virtual: bool
     """
-    def __init__(self, num_procs=1, lmp_exec="lmp", lmp_args={}, slurm=False,
-                 slurm_args={}, write_jobscript=True, jobscript_name="job.sh", jobscript_string = None,
-                 dir=None, execute = True):
+    def __init__(self, num_procs=1, mpi_args={}, lmp_exec="lmp", lmp_args={},
+                 slurm=False, slurm_args={}, write_jobscript=True, jobscript_name="job.sh",
+                 jobscript_string = None, dir=None, execute = True, activate_virtual=False):
         
         self.num_procs = num_procs
         self.lmp_exec = lmp_exec
@@ -44,15 +46,26 @@ class Device:
         self.jobscript_name = jobscript_name 
         self.jobscript_string = jobscript_string 
         self.execute = execute
+        self.activate_virtual = activate_virtual
         
-        if dir is not None:
-            if (":" in dir):
-                self.ssh, self.wd = dir.split(":")
-            else:
-                self.ssh = None
-                self.wd = dir
+        # create default mpirun/mpiexec argument dictionary and merge
+        default_mpi_args = {'-n' : num_procs}
+        self.mpi_args = {**default_mpi_args, **mpi_args}    # merge
+        if activate_virtual:
+            hostfile_name = 'hostfile'
+            with open(hostfile_name, 'w') as f:
+                f.write(f"localhost slots={self.mpi_args['-n']}")
+            self.mpi_args['-hostfile'] = hostfile_name
+
+        #if dir is not None:
+        print(dir)
+        if (":" in dir):
+            self.ssh, self.wd = dir.split(":")
         else:
-            warnings.warn("Working directory is not defined!")
+            self.ssh = None
+            self.wd = dir
+        #else:
+        #    warnings.warn("Working directory is not defined!")
            
 
 
@@ -75,13 +88,14 @@ class Device:
         """
         
         self.lmp_args["-in"] = lmp_script
-        exec_list = self.get_exec_list(self.num_procs, self.lmp_exec, self.lmp_args, lmp_var)
+        exec_list = self.get_exec_list(self.mpi_args, self.lmp_exec, self.lmp_args, lmp_var)
        
         if self.write_jobscript:
             if self.jobscript_string is None:
                 self.jobscript_string = self.gen_jobscript_string(exec_list, self.slurm_args)
             if self.ssh is None: # locally stored
                 self.store_jobscript(self.jobscript_string, self.wd + '/' + self.jobscript_name)    
+                #self.store_jobscript(self.jobscript_string, self.jobscript_name)  # already inside wd
             else: # temporary locally stored
                 p = subprocess.Popen(['ssh', 'egil', f'cat - > {self.wd}/{self.jobscript_name}'], stdin=subprocess.PIPE)
                 p.communicate(input=str.encode(self.jobscript_string))
@@ -92,6 +106,7 @@ class Device:
         if self.slurm: # Run with slurm
             if self.ssh is None: # Run locally
                 output = subprocess.check_output(["sbatch", f'{self.wd}/{self.jobscript_name}'])
+                #output = subprocess.check_output(["sbatch", f'{self.jobscript_name}'])  # already inside wd
             else: # Run on ssh 
                 output = subprocess.check_output(["ssh", self.ssh, f"cd {self.wd} && sbatch {self.jobscript_name}"])
             
@@ -123,14 +138,14 @@ class Device:
              
 
     @staticmethod
-    def get_exec_list(num_procs, lmp_exec, lmp_args, lmp_var):
+    def get_exec_list(mpi_args, lmp_exec, lmp_args, lmp_var):
         """Making a list with all mpirun arguments:
 
-            list = ['mpirun', '-n', {num_procs}, {lmp_exec}, '-in',
+            list = ['mpirun', {mpi_args}, {lmp_exec}, '-in',
                     {lmp_script}, {lmp_args}, {lmp_var}]
 
-        :param num_procs: number of processes
-        :type num_procs: int
+        :param mpi_args: mpirun/mpiexec command line arguments
+        :type mpi_args: dict
         :param lmp_exec: LAMMPS executable
         :type lmp_exec: str
         :param lmp_args: LAMMPS command line arguments
@@ -141,12 +156,16 @@ class Device:
         :rtype: list of str
         """
        
-        exec_list = ["mpirun", "-n", str(num_procs), lmp_exec]
+        exec_list = ["mpirun"] #, "-n", str(num_procs), lmp_exec]
+        for key, value in mpi_args.items():
+            exec_list.append(key)
+            exec_list.extend(str(value).split())
+        exec_list += [lmp_exec]
         for key, value in lmp_args.items():
             exec_list.append(key)
             exec_list.extend(str(value).split())
         for key, value in lmp_var.items():
-            # variable may be an LAMMPS index variable
+            # variable may be a LAMMPS index variable
             if type(value) in [list, tuple, ndarray]:
                 exec_list.extend(["-var", key])
                 exec_list.extend(map(str, list(value)))

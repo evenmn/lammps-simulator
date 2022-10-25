@@ -15,30 +15,31 @@ class Simulator:
 
     from .device import Device
 
-    def __init__(self, directory=None, overwrite=False):
+    def __init__(self, directory='.', overwrite=False):
         self.jobscript_string = None # Option to store jobscript in simulator class
         self.sim_settings = {'dir': directory} 
         
-        if directory is None:
-            self.wd = None
+        #if directory is None:
+        #    self.wd = ""
+        #    self.ssh = None
+        #else:
+        if (":" in directory):
+            self.ssh, self.wd = directory.split(":")
         else:
-            if (":" in directory):
-                self.ssh, self.wd = directory.split(":")
-            else:
-                self.ssh = None
-                self.wd = directory
-            if overwrite:
-                self._make_dir(self.wd, self.ssh)
-            else:
-                ext = 0
-                repeat = True
-                original_dir = self.wd
-                while repeat:
-                    repeat = self._make_dir(self.wd, self.ssh)
-                    if repeat:
-                        ext += 1
-                        self.wd = original_dir + f"_{ext}"
-            self.wd += "/"
+            self.ssh = None
+            self.wd = directory
+        if overwrite:
+            self._make_dir(self.wd, self.ssh)
+        else:
+            ext = 0
+            repeat = True
+            original_dir = self.wd
+            while repeat:
+                repeat = self._make_dir(self.wd, self.ssh)
+                if repeat:
+                    ext += 1
+                    self.wd = original_dir + f"_{ext}"
+        self.wd += "/"
 
     @staticmethod
     def _make_dir(dir_, host):
@@ -76,7 +77,10 @@ class Simulator:
             for file in filename:
                 head, tail = os.path.split(file)
                 if self.ssh is None:
-                    shutil.copyfile(file, self.wd + tail)
+                    try:
+                        shutil.copyfile(file, self.wd + tail)
+                    except shutil.SameFileError:
+                        pass
                 else:
                     # use subprocess.run for transfer to finish before moving on
                     subprocess.run(['rsync', '-av', file, self.ssh + ':' + self.wd + tail]) 
@@ -111,7 +115,10 @@ class Simulator:
         if copy and self.wd is not None:
             head, self.lmp_script = os.path.split(filename)
             if self.ssh is None:
-                shutil.copyfile(filename, self.wd + self.lmp_script)
+                try:
+                    shutil.copyfile(filename, self.wd + self.lmp_script)
+                except shutil.SameFileError:
+                    pass
             else:
                 subprocess.run(['rsync', '-av', filename, self.ssh + ':' + self.wd + self.lmp_script]) 
                 
@@ -153,7 +160,7 @@ class Simulator:
     
     def set_run_settings(self, **kwargs):
         """ Update class dict: self.sim_settings with kwargs
-            already existing keys get overwitten by kwargs 
+            already existing keys get overwritten by kwargs 
             but generates a warning.                            
             
         :param kwargs: arguments to be added to self.sim_settings.
@@ -161,7 +168,8 @@ class Simulator:
         """ 
         # Update dict: Merge where kwargs overwrites
         old_dict = self.sim_settings
-        self.sim_settings = self.sim_settings | kwargs 
+        #self.sim_settings = self.sim_settings | kwargs  # Python 3.9 feature 
+        self.sim_settings = {**self.sim_settings, **kwargs} 
         for key in old_dict:
             if not old_dict[key] == self.sim_settings[key]:
                 print(f'WARNING: \'{key}\' got updated from {old_dict[key]} to {self.sim_settings[key]} and might not match any pregeneraterd jobscripts.')
@@ -177,7 +185,8 @@ class Simulator:
         """
             
         self.set_run_settings(**kwargs)
-        self.sim_settings = {'lmp_args': {}} | self.sim_settings
+        #self.sim_settings = {'lmp_args': {}} | self.sim_settings  # Python 3.9 feature
+        self.sim_settings = {'lmp_args': {}, **self.sim_settings}
         self.sim_settings['lmp_args']['-in'] = self.lmp_script
         
         exec_list = self.Device.get_exec_list(self.sim_settings['num_procs'] , self.sim_settings['lmp_exec'], self.sim_settings['lmp_args'], self.var)
