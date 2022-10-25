@@ -23,11 +23,7 @@ class Device:
     :param write_jobscript: whether or not to write jobscript, 'True by default'.
     :type write_jobscript: bool
     :param jopscript_name: filename of jobscript, 'job.sh' by default.
-    :type jobscript: str
-    :param jobscript_string: container for jobscript text, 'None' by default.
-    :type jobscript_string: str / NoneType
-    :param dir: working directory including any ssh path, 'None' by default (must be updated).
-    :type dir: str / NoneType
+    :type jobscript_name: str
     :param execute: whether or not to run the program, 'True' by default.
     :type execute: bool
     :param activate_virtual: Activate virtual cores
@@ -35,7 +31,7 @@ class Device:
     """
     def __init__(self, num_procs=1, mpi_args={}, lmp_exec="lmp", lmp_args={},
                  slurm=False, slurm_args={}, write_jobscript=True, jobscript_name="job.sh",
-                 jobscript_string = None, dir=None, execute = True, activate_virtual=False):
+                 execute = True, activate_virtual=False):
         
         self.num_procs = num_procs
         self.lmp_exec = lmp_exec
@@ -44,7 +40,6 @@ class Device:
         self.slurm_args = slurm_args
         self.write_jobscript = write_jobscript
         self.jobscript_name = jobscript_name 
-        self.jobscript_string = jobscript_string 
         self.execute = execute
         self.activate_virtual = activate_virtual
         
@@ -56,17 +51,6 @@ class Device:
             with open(hostfile_name, 'w') as f:
                 f.write(f"localhost slots={self.mpi_args['-n']}")
             self.mpi_args['-hostfile'] = hostfile_name
-
-        #if dir is not None:
-        print(dir)
-        if (":" in dir):
-            self.ssh, self.wd = dir.split(":")
-        else:
-            self.ssh = None
-            self.wd = dir
-        #else:
-        #    warnings.warn("Working directory is not defined!")
-           
 
 
     def __str__(self):
@@ -87,6 +71,12 @@ class Device:
         :rtype: int
         """
         
+        if (":" in self.dir):
+            self.ssh, self.wd = self.dir.split(":")
+        else:
+            self.ssh = None
+            self.wd = self.dir
+
         self.lmp_args["-in"] = lmp_script
         exec_list = self.get_exec_list(self.mpi_args, self.lmp_exec, self.lmp_args, lmp_var)
        
@@ -95,7 +85,6 @@ class Device:
                 self.jobscript_string = self.gen_jobscript_string(exec_list, self.slurm_args)
             if self.ssh is None: # locally stored
                 self.store_jobscript(self.jobscript_string, self.wd + '/' + self.jobscript_name)    
-                #self.store_jobscript(self.jobscript_string, self.jobscript_name)  # already inside wd
             else: # temporary locally stored
                 p = subprocess.Popen(['ssh', 'egil', f'cat - > {self.wd}/{self.jobscript_name}'], stdin=subprocess.PIPE)
                 p.communicate(input=str.encode(self.jobscript_string))
@@ -106,7 +95,6 @@ class Device:
         if self.slurm: # Run with slurm
             if self.ssh is None: # Run locally
                 output = subprocess.check_output(["sbatch", f'{self.wd}/{self.jobscript_name}'])
-                #output = subprocess.check_output(["sbatch", f'{self.jobscript_name}'])  # already inside wd
             else: # Run on ssh 
                 output = subprocess.check_output(["ssh", self.ssh, f"cd {self.wd} && sbatch {self.jobscript_name}"])
             
@@ -156,7 +144,7 @@ class Device:
         :rtype: list of str
         """
        
-        exec_list = ["mpirun"] #, "-n", str(num_procs), lmp_exec]
+        exec_list = ["mpirun"]
         for key, value in mpi_args.items():
             exec_list.append(key)
             exec_list.extend(str(value).split())
@@ -183,7 +171,7 @@ class Device:
             #SBATCH --{key1}={value1}
             #SBATCH --{key2}={value2}
             ...
-            mpirun -n {num_procs} {lmp_exec} -in {lmp_script} {lmp_args} {lmp_var}
+            mpirun {mpi_args} {lmp_exec} -in {lmp_script} {lmp_args} {lmp_var}
 
         :param exec_list: list of strings to be executed
         :type exec_list: list

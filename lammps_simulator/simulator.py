@@ -17,12 +17,8 @@ class Simulator:
 
     def __init__(self, directory='.', overwrite=False):
         self.jobscript_string = None # Option to store jobscript in simulator class
-        self.sim_settings = {'dir': directory} 
+        self.full_dir = directory
         
-        #if directory is None:
-        #    self.wd = ""
-        #    self.ssh = None
-        #else:
         if (":" in directory):
             self.ssh, self.wd = directory.split(":")
         else:
@@ -141,14 +137,16 @@ class Simulator:
         :returns: job-ID
         :rtype: int
         """
-        self.set_run_settings(**kwargs)
-        self.set_run_settings(jobscript_string = self.jobscript_string)
+
         if computer is None and device is None:
-            device = self.Device(**self.sim_settings)
+            device = self.Device(**kwargs)
         elif device is None:
             warnings.warn("'Computer' is deprecated from version 1.1.0 and is replaced by the more intuitive 'Device'", DeprecationWarning)
             device = computer
-             
+        
+        device.dir = self.full_dir
+        device.ssh = self.ssh
+        device.jobscript_string = self.jobscript_string
         job_id = device(self.lmp_script, self.var, stdout, stderr)   
         try: 
             if kwargs['execute'] == False:
@@ -157,23 +155,6 @@ class Simulator:
             pass
         
         return job_id
-    
-    def set_run_settings(self, **kwargs):
-        """ Update class dict: self.sim_settings with kwargs
-            already existing keys get overwritten by kwargs 
-            but generates a warning.                            
-            
-        :param kwargs: arguments to be added to self.sim_settings.
-        :type kwargs: unpacked dictionary
-        """ 
-        # Update dict: Merge where kwargs overwrites
-        old_dict = self.sim_settings
-        #self.sim_settings = self.sim_settings | kwargs  # Python 3.9 feature 
-        self.sim_settings = {**self.sim_settings, **kwargs} 
-        for key in old_dict:
-            if not old_dict[key] == self.sim_settings[key]:
-                print(f'WARNING: \'{key}\' got updated from {old_dict[key]} to {self.sim_settings[key]} and might not match any pregeneraterd jobscripts.')
-
 
    
     def pre_generate_jobscript(self, **kwargs):
@@ -184,13 +165,13 @@ class Simulator:
         :type kwargs: unpacked dictionary 
         """
             
-        self.set_run_settings(**kwargs)
+        #self.set_run_settings(**kwargs)
         #self.sim_settings = {'lmp_args': {}} | self.sim_settings  # Python 3.9 feature
-        self.sim_settings = {'lmp_args': {}, **self.sim_settings}
-        self.sim_settings['lmp_args']['-in'] = self.lmp_script
+        #self.sim_settings = {'lmp_args': {}, **self.sim_settings}
+        #self.sim_settings['lmp_args']['-in'] = self.lmp_script
         
-        exec_list = self.Device.get_exec_list(self.sim_settings['num_procs'] , self.sim_settings['lmp_exec'], self.sim_settings['lmp_args'], self.var)
-        self.jobscript_string = self.Device.gen_jobscript_string(exec_list, self.sim_settings['slurm_args'])
+        exec_list = self.Device.get_exec_list(kwargs['mpi_args'] , kwargs['lmp_exec'], kwargs['lmp_args'], self.var)
+        self.jobscript_string = self.Device.gen_jobscript_string(exec_list, kwargs['slurm_args'])
      
    
     def add_to_jobscript(self, string, linebreak = True):
