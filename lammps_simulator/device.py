@@ -145,20 +145,22 @@ class Device:
         """
        
         exec_list = ["mpirun"]
-        for key, value in mpi_args.items():
+        for key, setting in mpi_args.items():
             exec_list.append(key)
-            exec_list.extend(str(value).split())
+            if setting is not None:
+                exec_list.extend(str(setting).split())
         exec_list += [lmp_exec]
-        for key, value in lmp_args.items():
+        for key, setting in lmp_args.items():
             exec_list.append(key)
-            exec_list.extend(str(value).split())
-        for key, value in lmp_var.items():
+            if setting is not None:
+                exec_list.extend(str(setting).split())
+        for key, setting in lmp_var.items():
             # variable may be a LAMMPS index variable
-            if type(value) in [list, tuple, ndarray]:
+            if type(setting) in [list, tuple, ndarray]:
                 exec_list.extend(["-var", key])
-                exec_list.extend(map(str, list(value)))
+                exec_list.extend(map(str, list(setting)))
             else:
-                exec_list.extend(["-var", key, str(value)])
+                exec_list.extend(["-var", key, str(setting)])
         return exec_list
 
  

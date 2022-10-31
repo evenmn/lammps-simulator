@@ -123,7 +123,7 @@ class Simulator:
 
 
     def run(self, computer=None, device=None, stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE, **kwargs):
+            stderr=subprocess.PIPE, activate_virtual=False, **kwargs):
         """Run simulation
 
         :param computer: computer object specifying computation device
