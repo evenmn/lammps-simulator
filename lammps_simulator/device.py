@@ -48,7 +48,7 @@ class Device:
         self.mpi_args = {**default_mpi_args, **mpi_args}    # merge
         if activate_virtual:
             hostfile_name = 'hostfile'
-            with open(hostfile_name, 'w') as f:
+            with open(self.wd + '/' + hostfile_name, 'w') as f:
                 f.write(f"localhost slots={self.mpi_args['-n']}")
             self.mpi_args['-hostfile'] = hostfile_name
 
@@ -94,7 +94,10 @@ class Device:
         
         if self.slurm: # Run with slurm
             if self.ssh is None: # Run locally
-                output = subprocess.check_output(["sbatch", f'{self.wd}/{self.jobscript_name}'])
+                main_path = os.getcwd()
+                os.chdir(self.wd)
+                output = subprocess.check_output(["sbatch", self.jobscript_name])
+                os.chdir(main_path)
             else: # Run on ssh 
                 output = subprocess.check_output(["ssh", self.ssh, f"cd {self.wd} && sbatch {self.jobscript_name}"])
             
