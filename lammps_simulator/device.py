@@ -242,8 +242,8 @@ class SlurmCPU(Device):
     :param procs_per_node: number of processes per node, 16 by default
     :type procs_per_node: int
     """
-    def __init__(self, num_nodes, procs_per_node=16, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, num_nodes, procs_per_node=16, slurm=True, **kwargs):
+        super().__init__(slurm=slurm, **kwargs)
         self.num_nodes = num_nodes
         self.num_procs = num_nodes * procs_per_node
 
@@ -268,8 +268,8 @@ class SlurmGPU(Device):
     :param mode: GPU mode, has to be either 'kokkos' or 'gpu', 'kokkos' by default
     :type mode: str
     """
-    def __init__(self, gpu_per_node=1, mode="kokkos", **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, gpu_per_node=1, mode="kokkos", slurm=True, **kwargs):
+        super().__init__(slurm=slurm, **kwargs)
         self.gpu_per_node = gpu_per_node
 
         default_slurm_args = {"job-name": "GPU-job",
