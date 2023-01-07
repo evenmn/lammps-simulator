@@ -139,7 +139,7 @@ class Simulator:
         """
 
         if computer is None and device is None:
-            device = self.Device(**kwargs)
+            device = self.Device(**kwargs, activate_virtual=activate_virtual)
         elif device is None:
             warnings.warn("'Computer' is deprecated from version 1.1.0 and is replaced by the more intuitive 'Device'", DeprecationWarning)
             device = computer

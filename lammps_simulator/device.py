@@ -46,11 +46,6 @@ class Device:
         # create default mpirun/mpiexec argument dictionary and merge
         default_mpi_args = {'-n' : num_procs}
         self.mpi_args = {**default_mpi_args, **mpi_args}    # merge
-        if activate_virtual:
-            hostfile_name = 'hostfile'
-            with open(self.wd + '/' + hostfile_name, 'w') as f:
-                f.write(f"localhost slots={self.mpi_args['-n']}")
-            self.mpi_args['-hostfile'] = hostfile_name
 
 
     def __str__(self):
@@ -76,6 +71,12 @@ class Device:
         else:
             self.ssh = None
             self.wd = self.dir
+
+        if self.activate_virtual:
+            hostfile_name = 'hostfile'
+            with open(self.wd + '/' + hostfile_name, 'w') as f:
+                f.write(f"localhost slots={self.mpi_args['-n']}")
+            self.mpi_args['-hostfile'] = hostfile_name
 
         self.lmp_args["-in"] = lmp_script
         exec_list = self.get_exec_list(self.mpi_args, self.lmp_exec, self.lmp_args, lmp_var)
