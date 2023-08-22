@@ -37,6 +37,8 @@ class Device:
         self.lmp_exec = lmp_exec
         self.lmp_args = lmp_args
         self.slurm = slurm
+        # if slurm argument `test-only` is set and execute is True
+        # device.call(...) will fail because no job id is returned
         self.slurm_args = slurm_args
         self.write_jobscript = write_jobscript
         self.jobscript_name = jobscript_name 
@@ -224,9 +226,9 @@ class GPU(Device):
                                 "-k": f"on g {self.gpu_per_node}",
                                 "-sf": "kk"}
         elif mode == "gpu":
-            default_lmp_args = {"-pk": "gpu newton on neigh full",
-                                "-k": f"on g {self.gpu_per_node}",
-                                "-sf": "gpu"}
+            default_lmp_args = {
+                "-pk": f"gpu {self.gpu_per_node}",
+                "-sf": "gpu"}
         else:
             raise NotImplementedError
 
@@ -285,8 +287,9 @@ class SlurmGPU(Device):
                                 "-k": f"on g {self.gpu_per_node}",
                                 "-sf": "kk"}
         elif mode == "gpu":
-            default_lmp_args = {"-pk": "gpu newton on neigh full",
-                                "-sf": "gpu"}
+            default_lmp_args = {
+                "-pk": f"gpu {self.gpu_per_node}",
+                "-sf": "gpu"}
         else:
             raise NotImplementedError
 
