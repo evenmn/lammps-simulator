@@ -9,7 +9,7 @@ When launching a LAMMPS simulation, the general command
 
     mpirun <mpi_args> <lmp_exec> <lmp_args>
 
-is executed. :code:`mpi_args` usually contains the flag :code:`-n <num_procs>`, and :code:`-hostfile hostfile` is added if :code:`activate_virtual=True` (see `activate virtual cores`_). For the LAMMPS command line arguments :code:`lmp_args`, the flag :code:`-in <lmp_exec>` is always included, with :code:`lmp_exec` being the LAMMPS executable. How to pass custom MPI and LAMMPS arguments is described below.
+is executed. :code:`mpi_args` usually contains the flag :code:`-n <num_procs>`, and :code:`-hostfile hostfile` is added if :code:`activate_virtual=True` (see :ref:`activate virtual cores`). For the LAMMPS command line arguments :code:`lmp_args`, the flag :code:`-in <lmp_exec>` is always included, with :code:`lmp_exec` being the LAMMPS executable. How to pass custom MPI and LAMMPS arguments is described below.
 
 
 MPI arguments
