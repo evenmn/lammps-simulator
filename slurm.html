@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Slurm &mdash; lammps-simulator  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=b3ba4146"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Command line arguments" href="args.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            lammps-simulator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="runscript.html">Running a LAMMPS script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="directory.html">Simulation directory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="variables.html">Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="args.html">Command line arguments</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Slurm</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#changing-name-of-job-script">Changing name of job script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-slurmcpu-device">The <code class="code docutils literal notranslate"><span class="pre">SlurmCPU</span></code> device</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-slurmgpu-device">The <code class="code docutils literal notranslate"><span class="pre">SlurmGPU</span></code> device</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#array-jobs">Array jobs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-lines-to-job-script">Adding lines to job script</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">lammps-simulator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Slurm</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/slurm.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="slurm">
+<span id="id1"></span><h1>Slurm<a class="headerlink" href="#slurm" title="Permalink to this heading"></a></h1>
+<p><code class="code docutils literal notranslate"><span class="pre">lammps-simulator</span></code> supports submitting simulations to a queue using Slurm. To do this, simply set <code class="code docutils literal notranslate"><span class="pre">slurm=True</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lammps_simulator</span> <span class="kn">import</span> <span class="n">sim</span>
+
+<span class="o">...</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">num_procs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">lmp_exec</span><span class="o">=</span><span class="s2">&quot;lmp&quot;</span><span class="p">,</span> <span class="n">slurm</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will create a job script, <code class="code docutils literal notranslate"><span class="pre">job.sh</span></code>, in the background that is submitted to slurm with the command <code class="code docutils literal notranslate"><span class="pre">sbatch</span> <span class="pre">job.sh</span></code>. The Slurm arguments can be specified using a dictionary:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">slurm_args</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;job-name&#39;</span><span class="p">:</span> <span class="s1">&#39;fun_run&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;partition&#39;</span><span class="p">:</span> <span class="s1">&#39;normal&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;nodes&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s1">&#39;ntasks&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
+
+<span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">num_procs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">lmp_exec</span><span class="o">=</span><span class="s2">&quot;lmp&quot;</span><span class="p">,</span> <span class="n">slurm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slurm_args</span><span class="o">=</span><span class="n">slurm_args</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If the Slurm argument only contains a keyword (e.g. <code class="code docutils literal notranslate"><span class="pre">wait</span></code>), set the value to <code class="code docutils literal notranslate"><span class="pre">None</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">slurm_args</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;job-name&#39;</span><span class="p">:</span> <span class="s1">&#39;fun_run&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;partition&#39;</span><span class="p">:</span> <span class="s1">&#39;normal&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;nodes&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s1">&#39;ntasks&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="s1">&#39;wait&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+</pre></div>
+</div>
+<section id="changing-name-of-job-script">
+<h2>Changing name of job script<a class="headerlink" href="#changing-name-of-job-script" title="Permalink to this heading"></a></h2>
+<p>To change the name of the generated job script, specify the new name with <code class="code docutils literal notranslate"><span class="pre">jobscript=&lt;new-name&gt;</span></code>. To submit an already generated job script, set <code class="code docutils literal notranslate"><span class="pre">generate_jobscript=False</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">num_procs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">lmp_exec</span><span class="o">=</span><span class="s2">&quot;lmp&quot;</span><span class="p">,</span> <span class="n">slurm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">generate_jobscript</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jobscript</span><span class="o">=</span><span class="s2">&quot;another_jobscript.sh&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="the-slurmcpu-device">
+<h2>The <code class="code docutils literal notranslate"><span class="pre">SlurmCPU</span></code> device<a class="headerlink" href="#the-slurmcpu-device" title="Permalink to this heading"></a></h2>
+<p>Sometimes, it can be convenient to use the premade Slurm devices, when submitting jobs to the queue using Slurm. These devices contain specific arguments for the device and default Slurm arguments, such that not all the arguments have to be specified manually. <code class="code docutils literal notranslate"><span class="pre">SlurmCPU</span></code> take the arguments <code class="code docutils literal notranslate"><span class="pre">num_nodes</span></code> and <code class="code docutils literal notranslate"><span class="pre">procs_per_node=16</span></code> in addition to the arguments mentioned above, with <code class="code docutils literal notranslate"><span class="pre">num_procs=num_nodes*procs_per_node</span></code>. The default arguments are</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">default_slurm_args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;job-name&quot;</span><span class="p">:</span> <span class="s2">&quot;CPU-job&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;partition&quot;</span><span class="p">:</span> <span class="s2">&quot;normal&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;ntasks&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">num_procs</span><span class="p">),</span>
+                      <span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">),</span>
+                      <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;slurm.out&quot;</span><span class="p">,</span>
+                     <span class="p">}</span>
+</pre></div>
+</div>
+<p>such that they match the number of processes defined elsewhere. They are individually overwritten if another value is set by the user.</p>
+</section>
+<section id="the-slurmgpu-device">
+<h2>The <code class="code docutils literal notranslate"><span class="pre">SlurmGPU</span></code> device<a class="headerlink" href="#the-slurmgpu-device" title="Permalink to this heading"></a></h2>
+<p>Similarly, <code class="code docutils literal notranslate"><span class="pre">SlurmGPU</span></code> takes the additional arguments <code class="code docutils literal notranslate"><span class="pre">gpu_per_node</span></code> and <code class="code docutils literal notranslate"><span class="pre">mode=&quot;kokkos&quot;</span></code>. The default Slurm and LAMMPS arguments for <code class="code docutils literal notranslate"><span class="pre">SlurmGPU</span></code> are</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">default_slurm_args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;job-name&quot;</span><span class="p">:</span> <span class="s2">&quot;GPU-job&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;partition&quot;</span><span class="p">:</span> <span class="s2">&quot;normal&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;ntasks&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpu_per_node</span><span class="p">),</span>
+                      <span class="s2">&quot;cpus-per-task&quot;</span><span class="p">:</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;gres&quot;</span><span class="p">:</span> <span class="s2">&quot;gpu:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpu_per_node</span><span class="p">),</span>
+                      <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;slurm.out&quot;</span><span class="p">,</span>
+                     <span class="p">}</span>
+
+<span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;kokkos&quot;</span><span class="p">:</span>
+    <span class="n">default_lmp_args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;-pk&quot;</span><span class="p">:</span> <span class="s2">&quot;kokkos newton on neigh full&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;-k&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;on g </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gpu_per_node</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;-sf&quot;</span><span class="p">:</span> <span class="s2">&quot;kk&quot;</span><span class="p">}</span>
+<span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;gpu&quot;</span><span class="p">:</span>
+    <span class="n">default_lmp_args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;-pk&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;gpu </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gpu_per_node</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;-sf&quot;</span><span class="p">:</span> <span class="s2">&quot;gpu&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>More about LAMMPS arguments on the next page.</p>
+</section>
+<section id="array-jobs">
+<h2>Array jobs<a class="headerlink" href="#array-jobs" title="Permalink to this heading"></a></h2>
+<p>Slurm array jobs can also easily be submitted. In the example below, an array of simulations with temperatures ranging from 110 to 150 incremented by 10 is submitted:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lammps_simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
+<span class="kn">from</span> <span class="nn">lammps_simulator.device</span> <span class="kn">import</span> <span class="n">SlurmCPU</span>
+
+<span class="n">slurm_args</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;job-name&#39;</span><span class="p">:</span> <span class="s1">&#39;arrayjob&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;nodes&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+              <span class="s1">&#39;ntasks&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+              <span class="s1">&#39;array&#39;</span><span class="p">:</span> <span class="s1">&#39;110-150:10&#39;</span>
+<span class="p">}</span>
+
+<span class="n">device</span> <span class="o">=</span> <span class="n">SlurmCPU</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">lmp_exec</span><span class="o">=</span><span class="s2">&quot;lmp&quot;</span><span class="p">,</span> <span class="n">slurm_args</span><span class="o">=</span><span class="n">slurm_args</span><span class="p">)</span>
+
+<span class="n">sim</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="s2">&quot;simulation&quot;</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">set_input_script</span><span class="p">(</span><span class="s2">&quot;script.in&quot;</span><span class="p">,</span> <span class="n">temp</span><span class="o">=</span><span class="s2">&quot;$</span><span class="si">{SLURM_ARRAY_TASK_ID}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="adding-lines-to-job-script">
+<h2>Adding lines to job script<a class="headerlink" href="#adding-lines-to-job-script" title="Permalink to this heading"></a></h2>
+<p>One can pregenerate a job script using</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sim</span><span class="o">.</span><span class="n">pre_generate_jobscript</span><span class="p">(</span><span class="n">num_procs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">lmp_exec</span><span class="o">=</span><span class="s2">&quot;lmp&quot;</span><span class="p">,</span> <span class="n">slurm_args</span> <span class="o">=</span> <span class="n">slurm_args</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and then add more lines to the job script before submitting the job:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sim</span><span class="o">.</span><span class="n">add_to_jobscript</span><span class="p">(</span><span class="s2">&quot; </span><span class="se">\n</span><span class="s2"> line1 </span><span class="se">\n</span><span class="s2"> line2&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="args.html" class="btn btn-neutral float-left" title="Command line arguments" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Even M. Nordhagen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
