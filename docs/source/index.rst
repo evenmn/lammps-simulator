@@ -15,8 +15,8 @@ Welcome to lammps-simulator's documentation!
    runscript
    directory
    variables
+   args
    slurm
-   lmpargs
 
 
 
