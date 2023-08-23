@@ -201,7 +201,6 @@ class GPU(Computer):
                                 "-sf": "kk"}
         elif mode == "gpu":
             default_lmp_args = {"-pk": "gpu newton on neigh full",
-                                "-k": f"on g {self.gpu_per_node}",
                                 "-sf": "gpu"}
         else:
             raise NotImplementedError
