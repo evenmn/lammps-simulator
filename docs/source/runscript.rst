@@ -23,7 +23,7 @@ Sometimes it can be useful to define a :code:`Device` object, especially when ru
    device = CPU(num_procs=4, lmp_exec="lmp")
    sim.run(device=device)
 
-Other devices include :code:`GPU` (run LAMMPS with the :code:`GPU` or :code:`KOKKOS` package), :code:`SlurmCPU` (submit LAMMPS CPU jobs to Slurm) and :code:`SlurmGPU` (submit LAMMPS GPU jobs to Slurm). The Slurm support is further described in the `Slurm`_-section.
+Other devices include :code:`GPU` (run LAMMPS with the :code:`GPU` or :code:`KOKKOS` package), :code:`SlurmCPU` (submit LAMMPS CPU jobs to Slurm) and :code:`SlurmGPU` (submit LAMMPS GPU jobs to Slurm). The Slurm support is further described in the :ref:`Slurm`-section.
 
 .. _activate virtual cores:
 
@@ -52,4 +52,4 @@ By doing this, a simulation can be run both on the physical and the virtual core
    sim.set_input_script("script.in")
    sim.run(num_procs=4, lmp_exec="lmp", activate_virtual=True)
 
-For more information about MPI command line arguments, see `command line arguments`_.
+For more information about MPI command line arguments, see :ref:`command line arguments`.

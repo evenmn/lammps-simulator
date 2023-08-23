@@ -20,5 +20,5 @@ Prerequisites
 
 1. Python 3.3+ (subprocess.DEVNULL from 3.3 needed)
 2. `NumPy <https://numpy.org>`_
-3. `LAMMPS (any recent version) <https://lammps.sandia.gov>_
+3. `LAMMPS (any recent version) <https://lammps.sandia.gov>`_
 
